@@ -1,7 +1,7 @@
 """
 Routes and views for the flask application.
 """
-
+from Cryptodome import Cipher
 from datetime import datetime
 from flask import render_template, views, request
 from flask import Response
@@ -71,19 +71,44 @@ def users_get():
     return r
 @app.route("/token", methods=["GET"])
 def token_get():
+    response = dict()
+    (response["msg"], status) = ("완료되었습니다", 200)
+
     id = request.headers.get("x-gs-id")
     password = request.headers.get("x-gs-password")
+    if id is None:
+         (response["msg"], status) = ("id가 들어오지 않았습니다.", 400)
+    if password is None:
+         (response["msg"], status) = ("password가 들어오지 않았습니다.", 400)
+    if status != 200:
+      r = Response(response= json.dumps(response), status=status, mimetype="application/json")
+    return r
+    
     #user_client = request.headers.get("user-agent")
     user = models.User()
     user.phonenumber = id
     user.password = password
     r = user.check_permission()
-    response = dict()
-    (response["msg"], status) = ("완료되었습니다", 200)
-    if r is None:
-        (response["msg"], status) = ("완료되었습니다", 200)
-        
-    return json.dumps(response), status
+    
+    r_t = type(r)
+    if r_t == models.NotFoundAccount:
+        (response["msg"], status) = (r.error_msg, 404)
+    elif r_t == models.IncollectPassword:
+        (response["msg"], status) = (r.error_msg, 400)
+    else:
+        import hashlib
+        import datetime
+        hash = hashlib.sha512()
+        d = datetime.datetime.now()
+        d = d.strftime("%Y-%m-%d %H:%M:%S")
+        token = "{} {}".format(d, user.phonenumber);
+        hash.update(token.encode())
+        token = hash.hexdigest()
+        user.update_token(token)
+        response["token"] = token
+
+    r = Response(response= json.dumps(response), status=status, mimetype="application/json")
+    return r
 @app.route("/clubs", methods=["GET"])
 def clubs_get():
     return "OK", 200

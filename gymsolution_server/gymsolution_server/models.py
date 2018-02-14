@@ -1,10 +1,28 @@
 from gymsolution_server import connection
 import datetime
+class Error:
+    error_msg = ""
+    def __init__(self, msg):
+        self.error_msg = msg
+        pass
+class IncollectPassword(Error):
+    def __init__(self):
+        return super().__init__("password가 다릅니다.")
+class NotFoundAccount(Error):
+    def __init__(self):
+        return super().__init__("계정을 찾을 수 없습니다.")
 class User:
     uid = None
     name = None#str()
     password = None#str()
     phonenumber = None#str()
+    @staticmethod
+    def get_by_token(token:str):
+        cur = connection.cursor()
+        args = (token)
+        cur.execute("SELECT * FROM token = %s",  args)
+
+        return None
     def __init__(self):
         self.uid = None
         self.name = None
@@ -13,10 +31,12 @@ class User:
     def check_permission(self):
         cur = connection.cursor()
         args = (self.phonenumber, self.password)
-        cur.execute("SELECT * FROM tb_users WHERE phone_number = %s AND password = password(%s)",  args)
+        cur.execute("SELECT password = password(%s) as `is_collect` FROM tb_users WHERE phone_number = %s",  args)
         row = cur.fetchone()
         if row is None:
-            return None
+            return NotFoundAccount()
+        if row["is_collect"] == False:
+            return IncollectPassword()
         id = row["uid"]
         name = row["name"]
         args = (id)
@@ -30,9 +50,11 @@ class User:
             res.password = None
             res.gender = row["gender"]
             res.gender = row["birthday"]
+            cur.close()
             return res
         cur.execute("SELECT * FROM tb_trainers WHERE user_uid = %s",  args)
         row = cur.fetchone()
+
         if row is not None:
             res = Trainer()
             res.uid = int(id)
@@ -40,8 +62,17 @@ class User:
             res.phonenumber = self.phonenumber
             res.password = None
             res.gym_uid = row["gym_uid"]
+            cur.close()
             return res
+        cur.close()
         return None
+    def update_token(self, token):
+        cur = connection.cursor()
+        args = (self.uid, token)
+        cur.execute("UPDATE tb_users SET token = %s WHERE uid = %?",  args)
+        cur.close()
+        connection.commit()
+        pass
 class Trainer(User):
     gym_uid = None#int()
     def insert(self):
