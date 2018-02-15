@@ -1,7 +1,6 @@
 """
 Routes and views for the flask application.
 """
-from Cryptodome import Cipher
 from datetime import datetime
 from flask import render_template, views, request
 from flask import Response
@@ -81,8 +80,8 @@ def token_get():
     if password is None:
          (response["msg"], status) = ("password가 들어오지 않았습니다.", 400)
     if status != 200:
-      r = Response(response= json.dumps(response), status=status, mimetype="application/json")
-    return r
+        r = Response(response= json.dumps(response), status=status, mimetype="application/json")
+        return r
     
     #user_client = request.headers.get("user-agent")
     user = models.User()
@@ -104,11 +103,14 @@ def token_get():
         token = "{} {}".format(d, user.phonenumber);
         hash.update(token.encode())
         token = hash.hexdigest()
-        user.update_token(token)
+        r.update_token(token)
         response["token"] = token
 
     r = Response(response= json.dumps(response), status=status, mimetype="application/json")
     return r
+@app.route("/tokens/<string:token>/user", methods=["GET"])
+def token_user_get(token:str):
+    return "", 200 
 @app.route("/clubs", methods=["GET"])
 def clubs_get():
     return "OK", 200

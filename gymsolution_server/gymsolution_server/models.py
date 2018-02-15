@@ -4,6 +4,7 @@ class Error:
     error_msg = ""
     def __init__(self, msg):
         self.error_msg = msg
+        
         pass
 class IncollectPassword(Error):
     def __init__(self):
@@ -30,8 +31,8 @@ class User:
         self.phonenumber = None
     def check_permission(self):
         cur = connection.cursor()
-        args = (self.phonenumber, self.password)
-        cur.execute("SELECT password = password(%s) as `is_collect` FROM tb_users WHERE phone_number = %s",  args)
+        args = (self.password , self.phonenumber)
+        cur.execute("SELECT password = password(%s) as `is_collect`, uid, name FROM tb_users WHERE phone_number = %s",  args)
         row = cur.fetchone()
         if row is None:
             return NotFoundAccount()
@@ -68,10 +69,10 @@ class User:
         return None
     def update_token(self, token):
         cur = connection.cursor()
-        args = (self.uid, token)
-        cur.execute("UPDATE tb_users SET token = %s WHERE uid = %?",  args)
-        cur.close()
+        args = (token, self.uid )
+        cur.execute("UPDATE tb_users SET token = %s WHERE uid = %s",  args)
         connection.commit()
+        cur.close()
         pass
 class Trainer(User):
     gym_uid = None#int()
