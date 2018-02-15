@@ -7,6 +7,12 @@ from flask import Response
 from gymsolution_server import app
 import gymsolution_server.models as models
 import json
+def json_handler(obj):
+    if hasattr(obj,"__dict__"):
+        return obj.__dict__
+    else:
+        return str(obj)
+
 @app.route("/users", methods=["POST"])
 def users_post():
     name = request.form.get("name")
@@ -110,7 +116,15 @@ def token_get():
     return r
 @app.route("/tokens/<string:token>/user", methods=["GET"])
 def token_user_get(token:str):
-    return "", 200 
+    response = dict()
+    (response["msg"], status) = ("완료되었습니다", 200)
+    r = models.User.get_by_token(token)
+    if type(r) == models.NotFoundAccount:
+         (response["msg"], status) = ("토큰이 유효하지 않습니다.", 403)
+    else:
+        response["user"] = r
+    r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
+    return r
 @app.route("/clubs", methods=["GET"])
 def clubs_get():
     return "OK", 200

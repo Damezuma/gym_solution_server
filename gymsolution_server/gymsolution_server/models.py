@@ -74,6 +74,25 @@ class User:
         connection.commit()
         cur.close()
         pass
+    @staticmethod
+    def get_by_token(token):
+        cur = connection.cursor()
+        args = (token)
+        cur.execute("SELECT * FROM  v_users WHERE token = %s ",  args)
+        row = cur.fetchone()
+        if row is None:
+            return NotFoundAccount()
+        user = None
+        if row["gym_uid"] is None:
+            user = Trainer()
+            user.gender = row["gender"]
+            user.birthday = row["birthday"]
+        else:
+            user = Trainee()
+            user.gym_uid = row["gym_uid"]
+        user.name = row["name"]
+        user.uid = row["uid"]
+        return user
 class Trainer(User):
     gym_uid = None#int()
     def insert(self):
