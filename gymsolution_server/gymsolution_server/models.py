@@ -158,3 +158,28 @@ class Trainee(User):
             row = cur.fetchone()
         cur.close()
         return res
+class Gym:
+    uid = None#int
+    lat = None
+    lang = None
+    name = None
+    address = None
+    def __init__(self, uid:int, lat:float, lang:float, name:str, address:str):
+        self.uid = uid
+        self.lat = lat
+        self.lang = lang
+        self.name = name
+        self.address = address
+    @staticmethod
+    def list():
+        cur = connection.cursor()
+        cur.execute("SELECT * FROM tb_gyms")
+        res = list();
+        row = cur.fetchone()
+        while row is not None:
+            gym = Gym(row["uid"], row["latitude"],row["longitude"],row["name"],row["address"] )
+            res.append(gym)
+            row = cur.fetchone()
+        cur.close()
+        return res
+ 

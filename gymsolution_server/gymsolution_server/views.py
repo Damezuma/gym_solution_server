@@ -125,8 +125,11 @@ def token_user_get(token:str):
         response["user"] = r
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
-@app.route("/clubs", methods=["GET"])
+@app.route("/gyms", methods=["GET"])
 def clubs_get():
-    return "OK", 200
-
-    
+    response = dict()
+    (response["msg"], status) = ("완료되었습니다", 200)
+    r = models.Gym.list()
+    response["result"] = r
+    r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
+    return r
