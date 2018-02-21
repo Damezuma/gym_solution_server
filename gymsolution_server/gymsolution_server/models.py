@@ -1,10 +1,10 @@
-from gymsolution_server import connection
+from gymsolution_server import get_coneection
+from flask import g
 import datetime
 class Error:
     error_msg = ""
     def __init__(self, msg):
         self.error_msg = msg
-        
         pass
 class IncollectPassword(Error):
     def __init__(self):
@@ -19,10 +19,12 @@ class User:
     phonenumber = None#str()
     @staticmethod
     def get_by_token(token:str):
+        connection = g.connection
         cur = connection.cursor()
         args = (token)
         cur.execute("SELECT * FROM token = %s",  args)
-
+        connection.close()
+        #TODO:
         return None
     def __init__(self):
         self.uid = None
@@ -30,6 +32,7 @@ class User:
         self.password = None
         self.phonenumber = None
     def check_permission(self):
+        connection = g.connection
         cur = connection.cursor()
         args = (self.password , self.phonenumber)
         cur.execute("SELECT password = password(%s) as `is_collect`, uid, name FROM tb_users WHERE phone_number = %s",  args)
@@ -68,14 +71,17 @@ class User:
         cur.close()
         return None
     def update_token(self, token):
+        connection = g.connection
         cur = connection.cursor()
         args = (token, self.uid )
         cur.execute("UPDATE tb_users SET token = %s WHERE uid = %s",  args)
         connection.commit()
+        
         cur.close()
         pass
     @staticmethod
     def get_by_token(token):
+        connection = g.connection
         cur = connection.cursor()
         args = (token)
         cur.execute("SELECT * FROM  v_users WHERE token = %s ",  args)
@@ -84,6 +90,7 @@ class User:
             return NotFoundAccount()
         user = None
         if row["gym_uid"] is None:
+            
             user = Trainer()
             user.gender = row["gender"]
             user.birthday = row["birthday"]
@@ -96,6 +103,7 @@ class User:
 class Trainer(User):
     gym_uid = None#int()
     def insert(self):
+        connection = g.connection
         condition = False
         condition = condition or (self.gym_uid is None)
         condition = condition or (self.name is None)
@@ -114,10 +122,16 @@ class Trainer(User):
         connection.commit()
         cur.close()
         return True
+    def get_groups(self):
+        cur = connection.cursor()
+        args = (token)
+        cur.execute("SELECT * FROM  v_users WHERE token = %s ",  args)
+        #
 class Trainee(User):
     gender = None#str()
     birthday = None#datetime.date.
     def insert(self):
+        connection = g.connection
         condition = False
         condition = condition or (self.gender is None)
         condition = condition or (self.birthday is None)
@@ -142,6 +156,7 @@ class Trainee(User):
         return True
     @staticmethod
     def list():
+        connection = g.connection
         cur = connection.cursor()
         cur.execute("SELECT * FROM v_trainees")
         res = list();
@@ -172,6 +187,7 @@ class Gym:
         self.address = address
     @staticmethod
     def list():
+        connection =g.connection
         cur = connection.cursor()
         cur.execute("SELECT * FROM tb_gyms")
         res = list();
@@ -182,4 +198,12 @@ class Gym:
             row = cur.fetchone()
         cur.close()
         return res
- 
+
+class Group:
+     uid = None #int
+     gym_uid = None #gym_uid
+     opened = None  #boolean
+     opener = None #opener
+     capacity = None #int
+     comments = None #String
+     time = None #

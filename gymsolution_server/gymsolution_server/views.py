@@ -15,13 +15,30 @@ def json_handler(obj):
 
 @app.route("/users", methods=["POST"])
 def users_post():
-    name = request.form.get("name")
-    password = request.form.get("password")
-    phonenumber = request.form.get("phonenumber")
-    type = request.form.get("type")
-    fitness_club_idx = request.form.get("fitness_club_idx")
-    gender = request.form.get("gender")
-    birthday = request.form.get("birthday")
+    
+    content_type = request.headers.get("content-type","")
+    name = None
+    password = None
+    phonenumber = None
+    type = None
+    fitness_club_idx = None
+    gender = None
+    birthday = None
+    data = None
+    print(content_type)
+    b = content_type.split(";")
+    if b[0].find("json"):
+        data = request.data
+        data = json.loads(data.decode("utf-8"))
+    else:
+        data = request.form
+    name = data.get("name")
+    password = data.get("password")
+    phonenumber = data.get("phonenumber")
+    type = data.get("type")
+    fitness_club_idx = data.get("fitness_club_idx")
+    gender = data.get("gender")
+    birthday = data.get("birthday")
     user = None
     response = dict()
     status, response["msg"] = (200 , "완료되었습니다")
@@ -61,6 +78,10 @@ def users_post():
         user.password = password.strip()
         if user.insert() == False:
             status , response["msg"] = (400, "전화번호가 중복됩니다")
+    if status != 200:
+        data = request.data
+        response["body"] = data.decode("utf-8")
+        print(response["body"])
     r = Response(response= json.dumps(response), status=status, mimetype="application/json")
     
     r.headers["Content-Type"] = "application/json; charset=utf-8"
@@ -94,7 +115,6 @@ def token_get():
     user.phonenumber = id
     user.password = password
     r = user.check_permission()
-    
     r_t = type(r)
     if r_t == models.NotFoundAccount:
         (response["msg"], status) = (r.error_msg, 404)
@@ -125,8 +145,28 @@ def token_user_get(token:str):
         response["user"] = r
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
+@app.route("/tokens/<string:token>/user/groups", methods=["GET"])
+def token_user_group_get(token:str):
+    response = dict()
+    (response["msg"], status) = ("완료되었습니다", 200)
+    r = models.User.get_by_token(token)
+    if type(r) == models.NotFoundAccount:
+         (response["msg"], status) = ("토큰이 유효하지 않습니다.", 403)
+    else:
+        response["user"] = r
+    #TODO:
+    r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
+    return r
 @app.route("/gyms", methods=["GET"])
 def clubs_get():
+    response = dict()
+    (response["msg"], status) = ("완료되었습니다", 200)
+    r = models.Gym.list()
+    response["result"] = r
+    r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
+    return r
+@app.route("/gyms/<int:uid>/groups" , methods=["GET"])
+def gym_groups_get(uid):
     response = dict()
     (response["msg"], status) = ("완료되었습니다", 200)
     r = models.Gym.list()
