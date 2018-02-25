@@ -170,11 +170,17 @@ def clubs_get():
 def gym_groups_get(uid):
     response = dict()
     (response["msg"], status) = ("완료되었습니다", 200)
-    r = models.Gym.find(uid)
-    if r is None:
-         (response["msg"], status) = ("해당하는 피트니스 클럽이 존재하지 않습니다.", 404)
+    token = request.headers.get("x-gs-token")
+    if token is None:
+        (response["msg"], status) = ("토큰이 존재하지 않습니다.", 403)
+    elif type(models.User.get_by_token(token)) is models.NotFoundAccount:
+         (response["msg"], status) = ("토큰이 유효하지 않습니다.", 403)
     else:
-        response["groups"] = r.get_groups()
+        r = models.Gym.find(uid)
+        if r is None:
+            (response["msg"], status) = ("해당하는 피트니스 클럽이 존재하지 않습니다.", 404)
+        else:
+            response["groups"] = r.get_groups()
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
 @app.route("/gyms" , methods=["POST"])
@@ -202,6 +208,7 @@ def gym_post():
 def gym_del(uid):
     response = dict()
     (response["msg"], status) = ("완료되었습니다", 200)
+    
     r = models.Gym.find(uid)
     if r is None:
          (response["msg"], status) = ("해당하는 피트니스 클럽이 존재하지 않습니다.", 404)
