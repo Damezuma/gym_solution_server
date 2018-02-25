@@ -1,4 +1,5 @@
 from flask import g
+from pymysql import Error
 import datetime
 class Error:
     error_msg = ""
@@ -242,6 +243,29 @@ class Gym:
         self.long = long
         self.name = name
         self.address = address
+    def insert(self):
+        from flask import g
+        connection = g.connection
+        cur = connection.cursor()
+        arg =  (self.name, self.address, self.lat, self.long)
+        try:
+            cur.execute("INSERT INTO tb_gyms (name,address, latitude, longitude) VALUES (%s, %s, %s, %s)", arg)
+        except Error as e:
+            print(e.error_msg)
+            return False
+        connection.commit()
+        return True
+    def delete(self):
+        from flask import g
+        connection = g.connection
+        cur = connection.cursor()
+        arg =  (self.uid)
+        try:
+            cur.execute("DELETE FROM  tb_gyms WHERE uid = %s", arg)
+        except Error as e:
+            print(e.error_msg)
+            return False
+        connection.commit()
     @staticmethod
     def find(uid):
         from flask import g

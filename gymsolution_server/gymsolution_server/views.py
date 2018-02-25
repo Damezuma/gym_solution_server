@@ -177,3 +177,35 @@ def gym_groups_get(uid):
         response["groups"] = r.get_groups()
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
+@app.route("/gyms" , methods=["POST"])
+def gym_post():
+    response = dict()
+    (response["msg"], status) = ("완료되었습니다", 200)
+    data = None
+    print(content_type)
+    b = content_type.split(";")
+    if b[0].find("json"):
+        data = request.data
+        data = json.loads(data.decode("utf-8"))
+    else:
+        data = request.form
+    name = data["name"]
+    address = data["address"]
+    latitude = data["latitude"]
+    longitude = data["longitude"]
+    r = models.Gym(None, latitude, longitude, name, address)
+    if not r.insert():
+        (response["msg"], status) = ("디비 쿼리에 실패했습니다.", 500)
+    r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
+    return r
+@app.route("/gyms/<int:uid>" , methods=["DELETE"])
+def gym_del(uid):
+    response = dict()
+    (response["msg"], status) = ("완료되었습니다", 200)
+    r = models.Gym.find(uid)
+    if r is None:
+         (response["msg"], status) = ("해당하는 피트니스 클럽이 존재하지 않습니다.", 404)
+    elif not r.delete():
+        (response["msg"], status) = ("디비 쿼리에 실패했습니다.", 500)
+    r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
+    return r
