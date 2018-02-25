@@ -324,7 +324,7 @@ class Group:
          self.uid = uid
          self.gym = gym
          self.capacity = capacity
-         self.opened = opened
+         self.opened = "Y" == opened 
          self.opener = opener
          self.time = time
          self.comments = comments
