@@ -233,21 +233,21 @@ class Trainee(User):
         return res
 class Gym:
     uid = None#int
-    lat = None
-    long = None
+    latitude = None
+    longitude = None
     name = None
     address = None
     def __init__(self, uid:int, lat:float, long:float, name:str, address:str):
         self.uid = uid
-        self.lat = lat
-        self.long = long
+        self.latitude = lat
+        self.longitude = long
         self.name = name
         self.address = address
     def insert(self):
         from flask import g
         connection = g.connection
         cur = connection.cursor()
-        arg =  (self.name, self.address, self.lat, self.long)
+        arg =  (self.name, self.address, self.latitude, self.longitude)
         try:
             cur.execute("INSERT INTO tb_gyms (name,address, latitude, longitude) VALUES (%s, %s, %s, %s)", arg)
         except Error as e:
