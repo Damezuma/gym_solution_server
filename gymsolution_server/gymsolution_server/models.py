@@ -1,4 +1,3 @@
-from gymsolution_server import get_coneection
 from flask import g
 import datetime
 class Error:
@@ -31,6 +30,26 @@ class User:
         self.name = None
         self.password = None
         self.phonenumber = None
+    @staticmethod
+    def find(uid:int):
+        connection = g.connection
+        cur = connection.cursor()
+        args = (uid)
+        cur.execute("SELECT * FROM  v_users WHERE uid = %s ",  args)
+        row = cur.fetchone()
+        if row is None:
+            return None
+        user = None
+        if row["gym_uid"] is None:
+            user = Trainee()
+            user.gender = row["gender"]
+            user.birthday = row["birthday"]
+        else:
+            user = Trainer()
+            user.gym_uid = row["gym_uid"]
+        user.name = row["name"]
+        user.uid = row["uid"]
+        return user
     def check_permission(self):
         connection = g.connection
         cur = connection.cursor()
@@ -90,12 +109,11 @@ class User:
             return NotFoundAccount()
         user = None
         if row["gym_uid"] is None:
-            
-            user = Trainer()
+            user = Trainee()
             user.gender = row["gender"]
             user.birthday = row["birthday"]
         else:
-            user = Trainee()
+            user = Trainer()
             user.gym_uid = row["gym_uid"]
         user.name = row["name"]
         user.uid = row["uid"]
@@ -130,6 +148,25 @@ class Trainer(User):
 class Trainee(User):
     gender = None#str()
     birthday = None#datetime.date.
+    @staticmethod
+    def list():
+        connection = g.connection
+        cur = connection.cursor()
+        cur.execute("SELECT * FROM v_trainees")
+        res = list();
+        row = cur.fetchone()
+        while row is not None:
+            trainee = Trainee()
+            trainee.uid = row["uid"]
+            trainee.name = row["name"]
+            trainee.password = row["password"]
+            trainee.phonenumber = row["phone_number"]
+            trainee.gender = row["gender"]
+            trainee.birthday = row["birthday"]
+            res.append(trainee)
+            row = cur.fetchone()
+        cur.close()
+        return res
     def insert(self):
         connection = g.connection
         condition = False
@@ -154,40 +191,112 @@ class Trainee(User):
         except:
             return False
         return True
-    @staticmethod
-    def list():
+    def get_entered_groups(self):
+        from flask import g
         connection = g.connection
         cur = connection.cursor()
-        cur.execute("SELECT * FROM v_trainees")
+        condition = False
+        condition = condition or (self.uid is None)
+        if condition:
+            return NotFoundAccount()
+        arg =  (self.uid)
+        gyms = dict()
+        openers = dict()
+        cur.execute("SELECT * FROM  v_user_groups WHERE user_uid = %s", arg)
         res = list();
         row = cur.fetchone()
         while row is not None:
-            trainee = Trainee()
-            trainee.uid = row["uid"]
-            trainee.name = row["name"]
-            trainee.password = row["password"]
-            trainee.phonenumber = row["phone_number"]
-            trainee.gender = row["gender"]
-            trainee.birthday = row["birthday"]
-            res.append(trainee)
+            group = dict()
+            gym_uid = row["gym_uid"]
+            opener_uid = row["opener_uid"]
+            if  not gym_uid in  gyms:
+                gyms[gym_uid] = Gym.find(gym_uid)
+            if not opener_uid in openers:
+                openers[opener_uid] = User.find(opener_uid)
+            group["gym"] = gyms[gym_uid]
+            group["opener"] = openers[opener_uid]
+            group["uid"] = row["uid"]
+            group["opened"] = row["opened"]
+            
+            group["capacity"] = row["capacity"]
+            group["comments"] = row["comments"]
+            group["time"] = row["time"]
+            group["charge"] = row["charge"]
+            group["days"] = row["days"]
+            group["start_date"] = row["start_date"]
+            group["period"] = row["period"]
+            g = Group(**group)
+            res.append(g)
             row = cur.fetchone()
         cur.close()
         return res
 class Gym:
     uid = None#int
     lat = None
-    lang = None
+    long = None
     name = None
     address = None
-    def __init__(self, uid:int, lat:float, lang:float, name:str, address:str):
+    def __init__(self, uid:int, lat:float, long:float, name:str, address:str):
         self.uid = uid
         self.lat = lat
-        self.lang = lang
+        self.long = long
         self.name = name
         self.address = address
     @staticmethod
+    def find(uid):
+        from flask import g
+        connection = g.connection
+        cur = connection.cursor()
+        arg =  (uid)
+        cur.execute("SELECT * FROM  tb_gyms WHERE uid = %s", arg)
+        row = cur.fetchone()
+        if row is None:
+            return None
+        lat = row["latitude"]
+        lon = row["longitude"]
+        name = row["name"]
+        address = row["address"]
+        gym = Gym(uid, lat, lon, name, address)
+        return gym
+    def get_groups(self):
+        from flask import g
+        connection = g.connection
+        cur = connection.cursor()
+        condition = False
+        condition = condition or (self.uid is None)
+        if condition:
+            return NotFoundAccount()
+        arg =  (self.uid)
+        gyms = dict()
+        openers = dict()
+        cur.execute("SELECT * FROM  tb_groups WHERE gym_uid = %s", arg)
+        res = list();
+        row = cur.fetchone()
+        while row is not None:
+            group = dict()
+            gym_uid = row["gym_uid"]
+            opener_uid = row["opener_uid"]
+            if not opener_uid in openers:
+                openers[opener_uid] = User.find(opener_uid)
+            group["gym"] = self
+            group["opener"] = openers[opener_uid]
+            group["uid"] = row["uid"]
+            group["opened"] = row["opened"]
+            group["capacity"] = row["capacity"]
+            group["comments"] = row["comments"]
+            group["time"] = row["time"]
+            group["charge"] = row["charge"]
+            group["days"] = row["days"]
+            group["start_date"] = row["start_date"]
+            group["period"] = row["period"]
+            g = Group(**group)
+            res.append(g)
+            row = cur.fetchone()
+        cur.close()
+        return res
+    @staticmethod
     def list():
-        connection =g.connection
+        connection = g.connection
         cur = connection.cursor()
         cur.execute("SELECT * FROM tb_gyms")
         res = list();
@@ -201,9 +310,25 @@ class Gym:
 
 class Group:
      uid = None #int
-     gym_uid = None #gym_uid
+     gym = None #Gym
      opened = None  #boolean
      opener = None #opener
      capacity = None #int
      comments = None #String
      time = None #
+     charge = None
+     days = None
+     start_date = None
+     period = None
+     def __init__(self, uid, gym, opened, opener, capacity, comments, time,charge, days, start_date, period):
+         self.uid = uid
+         self.gym = gym
+         self.capacity = capacity
+         self.opened = opened
+         self.opener = opener
+         self.time = time
+         self.comments = comments
+         self.charge = charge
+         self.days = days
+         self.start_date = start_date
+         self.period = period

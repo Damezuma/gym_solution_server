@@ -153,7 +153,8 @@ def token_user_group_get(token:str):
     if type(r) == models.NotFoundAccount:
          (response["msg"], status) = ("토큰이 유효하지 않습니다.", 403)
     else:
-        response["user"] = r
+        res = r.get_entered_groups()
+        response["groups"] = res
     #TODO:
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
@@ -169,7 +170,10 @@ def clubs_get():
 def gym_groups_get(uid):
     response = dict()
     (response["msg"], status) = ("완료되었습니다", 200)
-    r = models.Gym.list()
-    response["result"] = r
+    r = models.Gym.find(uid)
+    if r is None:
+         (response["msg"], status) = ("해당하는 피트니스 클럽이 존재하지 않습니다.", 404)
+    else:
+        response["groups"] = r.get_groups()
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
