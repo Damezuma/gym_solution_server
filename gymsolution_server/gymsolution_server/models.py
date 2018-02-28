@@ -19,6 +19,7 @@ class User:
     phonenumber = None#str()
     @staticmethod
     def get_by_token(token:str):
+        from flask import g
         connection = g.connection
         cur = connection.cursor()
         args = (token)
@@ -33,6 +34,7 @@ class User:
         self.phonenumber = None
     @staticmethod
     def find(uid:int):
+        from flask import g
         connection = g.connection
         cur = connection.cursor()
         args = (uid)
@@ -52,6 +54,7 @@ class User:
         user.uid = row["uid"]
         return user
     def check_permission(self):
+        from flask import g
         connection = g.connection
         cur = connection.cursor()
         args = (self.password , self.phonenumber)
@@ -91,6 +94,7 @@ class User:
         cur.close()
         return None
     def update_token(self, token):
+        from flask import g
         connection = g.connection
         cur = connection.cursor()
         args = (token, self.uid )
@@ -101,6 +105,7 @@ class User:
         pass
     @staticmethod
     def get_by_token(token):
+        from flask import g
         connection = g.connection
         cur = connection.cursor()
         args = (token)
@@ -122,6 +127,7 @@ class User:
 class Trainer(User):
     gym_uid = None#int()
     def insert(self):
+        from flask import g
         connection = g.connection
         condition = False
         condition = condition or (self.gym_uid is None)
@@ -141,7 +147,9 @@ class Trainer(User):
         connection.commit()
         cur.close()
         return True
+    
     def get_groups(self):
+        from flask import g
         cur = connection.cursor()
         args = (token)
         cur.execute("SELECT * FROM  v_users WHERE token = %s ",  args)
@@ -151,6 +159,7 @@ class Trainee(User):
     birthday = None#datetime.date.
     @staticmethod
     def list():
+        from flask import g
         connection = g.connection
         cur = connection.cursor()
         cur.execute("SELECT * FROM v_trainees")
@@ -168,7 +177,24 @@ class Trainee(User):
             row = cur.fetchone()
         cur.close()
         return res
+    def enter_group(self, group:Group):
+        from flask import g
+        arg =  (self.uid, group.uid)
+        columns = "trainee_uid,group_uid"
+        args_str = ("%s," * len(arg))[:-1]
+        table = "tb_users_in_group"
+        qry = "INSERT INTO %s (%s) VALUES (%s)"%(table, columns, args_str)
+        connection = g.connection
+        cur = connection.cursor()
+        try:
+            cur.execute(qry, arg)
+        except err:
+            print(err)
+            return False
+        connection.commit()
+        return True
     def insert(self):
+        from flask import g
         connection = g.connection
         condition = False
         condition = condition or (self.gender is None)
@@ -353,7 +379,6 @@ class Group:
          self.time = time
          self.comments = comments
          self.charge = charge
-         print(daysOfWeek)
          self.daysOfWeek =set(x.strip() for x in daysOfWeek.split(","))
          self.start_date = start_date
          self.period = period
@@ -362,13 +387,37 @@ class Group:
         connection = g.connection
         cur = connection.cursor()
         daysOfWeek =("{}," * len(self.daysOfWeek)).format(*self.daysOfWeek)[:-1]
-        print(daysOfWeek)
         arg =  (self.gym.uid, self.opener.uid, self.opened, self.capacity, self.time.strftime("%H:%M:00"), self.charge, daysOfWeek, self.comments)
         columns = "gym_uid,opener_uid, opened, capacity, time, charge, daysOfWeek, comments"
-        args_str = "".join("%s," for x in arg)[:-1]
+        args_str = ("%s," * len(arg))[:-1]
         table = "tb_groups"
         qry = "INSERT INTO %s (%s) VALUES (%s)"%(table, columns, args_str)
         print(qry)
         cur.execute(qry, arg)
         connection.commit()
         return True
+     @staticmethod
+     def find(uid):
+        from flask import g
+        connection = g.connection
+        cur = connection.cursor()
+        arg =  (uid)
+        cur.execute("SELECT * FROM  tb_groups WHERE uid = %s", arg)
+        row = cur.fetchone()
+        if row is None:
+            return None
+        group = dict()
+        gym_uid = row["gym_uid"]
+        opener_uid = row["opener_uid"]
+        group["gym"] = Gym.find(gym_uid)
+        group["opener"] = User.find(opener_uid)
+        group["uid"] = row["uid"]
+        group["opened"] = row["opened"]
+        group["capacity"] = row["capacity"]
+        group["comments"] = row["comments"]
+        group["time"] = row["time"]
+        group["charge"] = row["charge"]
+        group["daysOfWeek"] = row["daysOfWeek"]
+        group["start_date"] = row["start_date"]
+        group["period"] = row["period"]
+        return Group(**group)

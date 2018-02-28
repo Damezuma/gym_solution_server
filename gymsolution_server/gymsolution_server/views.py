@@ -276,3 +276,32 @@ def groups_post():
         (response["msg"], status) = ("DB에러가 났습니다.", 500)
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
+@app.route("/tokens/<str:token>/user/groups/<int:group>", methods=["PUT"])
+def token_user_group_post(token, group):
+    response = dict()
+    status = 200
+    (response["msg"], status) = ("완료되었습니다", 200)
+    trainee = None
+    if token is None:
+        (response["msg"], status) = ("토큰이(가) 존재하지 않습니다.", 403)
+    else:
+        temp = models.User.get_by_token(token)
+        t = type(temp)
+        if t is models.NotFoundAccount:
+            (response["msg"], status) = ("토큰이(가) 유효하지 않습니다.", 403)
+        elif t is not models.Trainee:
+             (response["msg"], status) = ("트레이니이(가) 아닙니다.", 403)
+        else:
+            trainee = temp
+    if trainee is None:
+        r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
+        return r
+    group = models.Group.find(group)
+    if group is None:
+         (response["msg"], status) = ("그룹이(가) 존재하지 않습니다.", 404)
+    elif not group.opened:
+        (response["msg"], status) = ("그룹 참가이(가) 마감되었습니다.", 404)
+    else:
+        res = trainee.enter_group(group)
+    r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
+    return r
