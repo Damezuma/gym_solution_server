@@ -10,6 +10,10 @@ import json
 def json_handler(obj):
     if hasattr(obj,"__dict__"):
         return obj.__dict__
+    elif type(obj) is set:
+        return list(x for x in obj)
+    elif type(obj) is time:
+        return obj.strftime("%H:%M")
     else:
         return str(obj)
 
@@ -276,7 +280,7 @@ def groups_post():
         (response["msg"], status) = ("DB에러가 났습니다.", 500)
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
-@app.route("/tokens/<str:token>/user/groups/<int:group>", methods=["PUT"])
+@app.route("/tokens/<string:token>/user/groups/<int:group>", methods=["PUT"])
 def token_user_group_post(token, group):
     response = dict()
     status = 200

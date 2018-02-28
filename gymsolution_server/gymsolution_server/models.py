@@ -177,7 +177,7 @@ class Trainee(User):
             row = cur.fetchone()
         cur.close()
         return res
-    def enter_group(self, group:Group):
+    def enter_group(self, group):
         from flask import g
         arg =  (self.uid, group.uid)
         columns = "trainee_uid,group_uid"
@@ -249,7 +249,7 @@ class Trainee(User):
             group["comments"] = row["comments"]
             group["time"] = row["time"]
             group["charge"] = row["charge"]
-            group["daysOfWeek"] = row["daysOfWeek"]
+            group["daysOfWeek"] = DaysOfWeeks(row["uid"])
             group["start_date"] = row["start_date"]
             group["period"] = row["period"]
             g = Group(**group)
@@ -336,7 +336,7 @@ class Gym:
             group["comments"] = row["comments"]
             group["time"] = row["time"]
             group["charge"] = row["charge"]
-            group["daysOfWeek"] = row["daysOfWeek"]
+            group["daysOfWeek"] = DaysOfWeeks(row["uid"])
             group["start_date"] = row["start_date"]
             group["period"] = row["period"]
             g = Group(**group)
@@ -357,7 +357,17 @@ class Gym:
             row = cur.fetchone()
         cur.close()
         return res
-
+class DaysOfWeeks:
+    group_uid = -1
+    def __init__(self, uid:int):
+        self.group_uid = uid
+    def get(self):
+        from flask import g
+        connection = g.connection
+        cur = connection.cursor()
+        cur.execute("SELECT dayOfWeek FROM  tb_daysOfWeeks WHERE uid = %s", (self.group_uid))
+        rows = cur.fetchall()
+        return set(row['dayOfWeek'] for row in rows)
 class Group:
      uid = None #int
      gym = None #Gym
@@ -371,29 +381,38 @@ class Group:
      start_date = None
      period = None
      def __init__(self, uid, gym, opened, opener, capacity, comments, time,charge, daysOfWeek, start_date, period):
-         self.uid = uid
-         self.gym = gym
-         self.capacity = capacity
-         self.opened = "Y" == opened 
-         self.opener = opener
-         self.time = time
-         self.comments = comments
-         self.charge = charge
-         self.daysOfWeek =set(x.strip() for x in daysOfWeek.split(","))
-         self.start_date = start_date
-         self.period = period
+        self.uid = uid
+        self.gym = gym
+        self.capacity = capacity
+        self.opened = "Y" == opened 
+        self.opener = opener
+        self.time = time
+        self.comments = comments
+        self.charge = charge
+        if type(daysOfWeek) is DaysOfWeeks:
+            self.daysOfWeek = daysOfWeek.get()
+        else:
+            self.daysOfWeek =set(x.strip() for x in daysOfWeek.split(","))
+        self.start_date = start_date
+        self.period = period
      def insert(self):
         from flask import g
         connection = g.connection
         cur = connection.cursor()
         daysOfWeek =("{}," * len(self.daysOfWeek)).format(*self.daysOfWeek)[:-1]
-        arg =  (self.gym.uid, self.opener.uid, self.opened, self.capacity, self.time.strftime("%H:%M:00"), self.charge, daysOfWeek, self.comments)
-        columns = "gym_uid,opener_uid, opened, capacity, time, charge, daysOfWeek, comments"
+        arg =  (self.gym.uid, self.opener.uid, self.opened, self.capacity, self.time.strftime("%H:%M:00"), self.charge, self.comments)
+        columns = "gym_uid,opener_uid, opened, capacity, time, charge, comments"
         args_str = ("%s," * len(arg))[:-1]
         table = "tb_groups"
         qry = "INSERT INTO %s (%s) VALUES (%s)"%(table, columns, args_str)
         print(qry)
         cur.execute(qry, arg)
+        table = "tb_daysOfWeeks"
+        columns = "uid, dayOfWeek"
+        args_str = "%s, %s"
+        qry = "INSERT INTO %s (%s) VALUES (%s)"%(table, columns, args_str)
+        args_list = list((cur.lastrowid, x) for x in self.daysOfWeek)
+        cur.executemany(qry, args_list)
         connection.commit()
         return True
      @staticmethod
@@ -417,7 +436,7 @@ class Group:
         group["comments"] = row["comments"]
         group["time"] = row["time"]
         group["charge"] = row["charge"]
-        group["daysOfWeek"] = row["daysOfWeek"]
+        group["daysOfWeek"] = DaysOfWeeks(row["uid"])
         group["start_date"] = row["start_date"]
         group["period"] = row["period"]
         return Group(**group)
