@@ -1,7 +1,7 @@
 """
 Routes and views for the flask application.
 """
-from datetime import datetime
+from datetime import datetime,time
 from flask import render_template, views, request
 from flask import Response
 from gymsolution_server import app
@@ -188,9 +188,9 @@ def gym_post():
     response = dict()
     (response["msg"], status) = ("완료되었습니다", 200)
     data = None
-    print(content_type)
+    content_type = request.headers.get("content-type","")
     b = content_type.split(";")
-    if b[0].find("json"):
+    if b[0].find("json") != -1:
         data = request.data
         data = json.loads(data.decode("utf-8"))
     else:
@@ -207,6 +207,7 @@ def gym_post():
 @app.route("/gyms/<int:uid>" , methods=["DELETE"])
 def gym_del(uid):
     response = dict()
+    status = 200
     (response["msg"], status) = ("완료되었습니다", 200)
     
     r = models.Gym.find(uid)
@@ -214,5 +215,64 @@ def gym_del(uid):
          (response["msg"], status) = ("해당하는 피트니스 클럽이 존재하지 않습니다.", 404)
     elif not r.delete():
         (response["msg"], status) = ("디비 쿼리에 실패했습니다.", 500)
+    r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
+    return r
+@app.route("/groups", methods=["POST"])
+def groups_post():
+    token = request.headers.get("x-gs-token")
+    response = dict()
+    status = 200
+    (response["msg"], status) = ("완료되었습니다", 200)
+    trainer = None
+    if token is None:
+        (response["msg"], status) = ("토큰이 존재하지 않습니다.", 403)
+    else:
+        temp = models.User.get_by_token(token)
+        t = type(temp)
+        if t is models.NotFoundAccount:
+            (response["msg"], status) = ("토큰이 유효하지 않습니다.", 403)
+        elif t is not models.Trainer:
+             (response["msg"], status) = ("트레이너가 아닙니다.", 403)
+        else:
+            trainer = temp
+    if trainer is None:
+        r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
+        return r
+    data = None
+    content_type = request.headers.get("content-type","")
+    b = content_type.split(";")
+    if b[0].find("json") != -1:
+        data = request.data
+        data = json.loads(data.decode("utf-8"))
+    else:
+        data = request.form
+    
+    capacity         = data.get("capacity", None)
+    comment      = data.get("comment", None)
+    _time               = data.get("time",None)
+    charge          = data.get("charge",None)
+    daysOfWeek= data.get("daysOfWeek",None)
+    if capacity is None:
+        (response["msg"], status) = ("capacity이(가) 들어오지 않았습니다.", 400)
+    elif comment is None:    
+        (response["msg"], status) = ("comment이(가) 들어오지 않았습니다.", 400)
+    elif _time is None:
+        (response["msg"], status) = ("time이(가) 들어오지 않았습니다.", 400)
+    elif charge is None:
+        (response["msg"], status) = ("charge이(가) 들어오지 않았습니다.", 400)
+    elif dayOfWeek is None:
+        (response["msg"], status) = ("dayOfWeek이(가) 들어오지 않았습니다.", 400)
+    if status != 200:
+        r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
+        return r
+    if type(daysOfWeek) is list:
+        daysOfWeek = str(daysOfWeek)[1:-1]
+    _time = _time.split(":")
+    _time = list(int(x) for x in _time)
+    _time = time(_time[0], _time[1])
+    gym = models.Gym.find(trainer.uid)
+    group = models.Group(None,gym,"Y",trainer, capacity,comment, _time,charge, daysOfWeek,None,None )
+    if group.insert():
+        (response["msg"], status) = ("DB에러가 났습니다.", 500)
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r

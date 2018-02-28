@@ -223,7 +223,7 @@ class Trainee(User):
             group["comments"] = row["comments"]
             group["time"] = row["time"]
             group["charge"] = row["charge"]
-            group["days"] = row["days"]
+            group["daysOfWeek"] = row["daysOfWeek"]
             group["start_date"] = row["start_date"]
             group["period"] = row["period"]
             g = Group(**group)
@@ -310,7 +310,7 @@ class Gym:
             group["comments"] = row["comments"]
             group["time"] = row["time"]
             group["charge"] = row["charge"]
-            group["days"] = row["days"]
+            group["daysOfWeek"] = row["daysOfWeek"]
             group["start_date"] = row["start_date"]
             group["period"] = row["period"]
             g = Group(**group)
@@ -341,10 +341,10 @@ class Group:
      comments = None #String
      time = None #
      charge = None
-     days = None
+     daysOfWeek = None
      start_date = None
      period = None
-     def __init__(self, uid, gym, opened, opener, capacity, comments, time,charge, days, start_date, period):
+     def __init__(self, uid, gym, opened, opener, capacity, comments, time,charge, daysOfWeek, start_date, period):
          self.uid = uid
          self.gym = gym
          self.capacity = capacity
@@ -353,6 +353,22 @@ class Group:
          self.time = time
          self.comments = comments
          self.charge = charge
-         self.days = days
+         self.daysOfWeek = daysOfWeek.split(",")
          self.start_date = start_date
          self.period = period
+     def insert(self):
+        from flask import g
+        connection = g.connection
+        cur = connection.cursor()
+        arg =  (self.gym.uid, self.opener.uid, self.opened, self.capacity, self.time, self.charge, self.daysOfWeek)
+        try:
+            columns = "gym_uid,opender_uid, opened, capacity, time, charge, daysOfWeek"
+            args_str = "".join("%s," for x in arg)[:-1]
+            table = "tb_groups"
+            qry = "INSERT INTO %s (%s) VALUES (%s)"%(table, columns, args_str)
+            cur.execute(qry, arg)
+            connection.commit()
+        except Error as e:
+            print(e.error_msg)
+            return False
+        return True
