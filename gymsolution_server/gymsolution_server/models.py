@@ -353,22 +353,22 @@ class Group:
          self.time = time
          self.comments = comments
          self.charge = charge
-         self.daysOfWeek = daysOfWeek.split(",")
+         print(daysOfWeek)
+         self.daysOfWeek =set(x.strip() for x in daysOfWeek.split(","))
          self.start_date = start_date
          self.period = period
      def insert(self):
         from flask import g
         connection = g.connection
         cur = connection.cursor()
-        arg =  (self.gym.uid, self.opener.uid, self.opened, self.capacity, self.time, self.charge, self.daysOfWeek)
-        try:
-            columns = "gym_uid,opender_uid, opened, capacity, time, charge, daysOfWeek"
-            args_str = "".join("%s," for x in arg)[:-1]
-            table = "tb_groups"
-            qry = "INSERT INTO %s (%s) VALUES (%s)"%(table, columns, args_str)
-            cur.execute(qry, arg)
-            connection.commit()
-        except Error as e:
-            print(e.error_msg)
-            return False
+        daysOfWeek =("{}," * len(self.daysOfWeek)).format(*self.daysOfWeek)[:-1]
+        print(daysOfWeek)
+        arg =  (self.gym.uid, self.opener.uid, self.opened, self.capacity, self.time.strftime("%H:%M:00"), self.charge, daysOfWeek, self.comments)
+        columns = "gym_uid,opener_uid, opened, capacity, time, charge, daysOfWeek, comments"
+        args_str = "".join("%s," for x in arg)[:-1]
+        table = "tb_groups"
+        qry = "INSERT INTO %s (%s) VALUES (%s)"%(table, columns, args_str)
+        print(qry)
+        cur.execute(qry, arg)
+        connection.commit()
         return True

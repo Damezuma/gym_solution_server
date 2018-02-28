@@ -260,19 +260,19 @@ def groups_post():
         (response["msg"], status) = ("time이(가) 들어오지 않았습니다.", 400)
     elif charge is None:
         (response["msg"], status) = ("charge이(가) 들어오지 않았습니다.", 400)
-    elif dayOfWeek is None:
-        (response["msg"], status) = ("dayOfWeek이(가) 들어오지 않았습니다.", 400)
+    elif daysOfWeek is None:
+        (response["msg"], status) = ("daysOfWeek이(가) 들어오지 않았습니다.", 400)
     if status != 200:
         r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
         return r
     if type(daysOfWeek) is list:
-        daysOfWeek = str(daysOfWeek)[1:-1]
+        daysOfWeek =("{}," * len(daysOfWeek)).format(*daysOfWeek)[:-1]
     _time = _time.split(":")
     _time = list(int(x) for x in _time)
     _time = time(_time[0], _time[1])
-    gym = models.Gym.find(trainer.uid)
+    gym = models.Gym.find(trainer.gym_uid)
     group = models.Group(None,gym,"Y",trainer, capacity,comment, _time,charge, daysOfWeek,None,None )
-    if group.insert():
+    if not group.insert():
         (response["msg"], status) = ("DB에러가 났습니다.", 500)
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
