@@ -150,9 +150,37 @@ class Trainer(User):
     
     def get_groups(self):
         from flask import g
+        connection = g.connection
         cur = connection.cursor()
-        args = (token)
-        cur.execute("SELECT * FROM  v_users WHERE token = %s ",  args)
+        args = (self.uid)
+        cur.execute("SELECT * FROM tb_groups WHERE opener_uid = %s ",  args)
+        res = list();
+        row = cur.fetchone()
+        while row is not None:
+            group = dict()
+            gym_uid = row["gym_uid"]
+            opener_uid = row["opener_uid"]
+            if  not gym_uid in  gyms:
+                gyms[gym_uid] = Gym.find(gym_uid)
+            if not opener_uid in openers:
+                openers[opener_uid] = User.find(opener_uid)
+            group["gym"] = gyms[gym_uid]
+            group["opener"] = openers[opener_uid]
+            group["uid"] = row["uid"]
+            group["opened"] = row["opened"]
+            
+            group["capacity"] = row["capacity"]
+            group["comments"] = row["comments"]
+            group["time"] = row["time"]
+            group["charge"] = row["charge"]
+            group["daysOfWeek"] = DaysOfWeeks(row["uid"])
+            group["start_date"] = row["start_date"]
+            group["period"] = row["period"]
+            g = Group(**group)
+            res.append(g)
+            row = cur.fetchone()
+        cur.close()
+        return res
         #
 class Trainee(User):
     gender = None#str()
@@ -218,7 +246,7 @@ class Trainee(User):
         except:
             return False
         return True
-    def get_entered_groups(self):
+    def get_groups(self):
         from flask import g
         connection = g.connection
         cur = connection.cursor()

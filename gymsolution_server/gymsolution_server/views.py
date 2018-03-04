@@ -157,7 +157,7 @@ def token_user_group_get(token:str):
     if type(r) == models.NotFoundAccount:
          (response["msg"], status) = ("토큰이 유효하지 않습니다.", 403)
     else:
-        res = r.get_entered_groups()
+        res = r.get_groups()
         response["groups"] = res
     #TODO:
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
