@@ -176,6 +176,7 @@ class Trainer(User):
             group["daysOfWeek"] = DaysOfWeeks(row["uid"])
             group["start_date"] = row["start_date"]
             group["period"] = row["period"]
+            group["title"] = row["title"]
             g = Group(**group)
             res.append(g)
             row = cur.fetchone()
@@ -280,6 +281,7 @@ class Trainee(User):
             group["daysOfWeek"] = DaysOfWeeks(row["uid"])
             group["start_date"] = row["start_date"]
             group["period"] = row["period"]
+            group["title"] = row["title"]
             g = Group(**group)
             res.append(g)
             row = cur.fetchone()
@@ -367,6 +369,7 @@ class Gym:
             group["daysOfWeek"] = DaysOfWeeks(row["uid"])
             group["start_date"] = row["start_date"]
             group["period"] = row["period"]
+            group["title"] = row["title"]
             g = Group(**group)
             res.append(g)
             row = cur.fetchone()
@@ -408,7 +411,8 @@ class Group:
      daysOfWeek = None
      start_date = None
      period = None
-     def __init__(self, uid, gym, opened, opener, capacity, comments, time,charge, daysOfWeek, start_date, period):
+     title = None#string
+     def __init__(self, uid, gym, opened, opener, capacity, comments, time,charge, daysOfWeek, start_date, period, title):
         self.uid = uid
         self.gym = gym
         self.capacity = capacity
@@ -417,6 +421,7 @@ class Group:
         self.time = time
         self.comments = comments
         self.charge = charge
+        self.title = title
         if type(daysOfWeek) is DaysOfWeeks:
             self.daysOfWeek = daysOfWeek.get()
         else:
@@ -428,8 +433,8 @@ class Group:
         connection = g.connection
         cur = connection.cursor()
         daysOfWeek =("{}," * len(self.daysOfWeek)).format(*self.daysOfWeek)[:-1]
-        arg =  (self.gym.uid, self.opener.uid, self.opened, self.capacity, self.time.strftime("%H:%M:00"), self.charge, self.comments)
-        columns = "gym_uid,opener_uid, opened, capacity, time, charge, comments"
+        arg =  (self.gym.uid, self.opener.uid, self.opened, self.capacity, self.time.strftime("%H:%M:00"), self.charge, self.comments, self.title)
+        columns = "gym_uid,opener_uid, opened, capacity, time, charge, comments, title"
         args_str = ("%s," * len(arg))[:-1]
         table = "tb_groups"
         qry = "INSERT INTO %s (%s) VALUES (%s)"%(table, columns, args_str)
@@ -467,4 +472,5 @@ class Group:
         group["daysOfWeek"] = DaysOfWeeks(row["uid"])
         group["start_date"] = row["start_date"]
         group["period"] = row["period"]
+        group["title"] = row["title"]
         return Group(**group)
