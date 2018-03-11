@@ -412,8 +412,9 @@ class Group:
      start_date = None
      period = None
      title = None#string
+     user_count = None#int
      def __init__(self, uid, gym, opened, opener, capacity, comment, time,charge, daysOfWeek, start_date, period, title):
-        self.uid = uid
+        self.uid = int(uid)
         self.gym = gym
         self.capacity = capacity
         self.opened = "Y" == opened 
@@ -422,6 +423,14 @@ class Group:
         self.comment = comment
         self.charge = charge
         self.title = title
+
+        from flask import g
+        connection = g.connection
+        cur = connection.cursor()
+        cur.execute("SELECT * from v_count_in_group where group_uid = %s", (self.uid))
+        row = cur.fetchone()
+        if row is not None:
+            self.user_count = row["count"]
         if type(daysOfWeek) is DaysOfWeeks:
             self.daysOfWeek = daysOfWeek.get()
         else:
