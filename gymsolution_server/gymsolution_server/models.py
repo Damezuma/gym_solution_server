@@ -17,6 +17,12 @@ class User:
     name = None#str()
     password = None#str()
     phonenumber = None#str()
+
+    def __init__(self, uid = None, phonenumber = None, name = None, password = None):
+        self.uid = uid
+        self.name = name
+        self.phonenumber = phonenumber
+        self.password = password
     @staticmethod
     def get_by_token(token:str):
         from flask import g
@@ -27,11 +33,6 @@ class User:
         connection.close()
         #TODO:
         return None
-    def __init__(self):
-        self.uid = None
-        self.name = None
-        self.password = None
-        self.phonenumber = None
     @staticmethod
     def find(uid:int):
         from flask import g
@@ -43,15 +44,18 @@ class User:
         if row is None:
             return None
         user = None
+        _class = None
+        param = dict()
+        param["name"] = row["name"]
+        param["uid"] = row["uid"]
         if row["gym_uid"] is None:
-            user = Trainee()
-            user.gender = row["gender"]
-            user.birthday = row["birthday"]
+            param["gender"] = row["gender"]
+            param["birthday"] = row["birthday"]
+            _class = Trainee
         else:
-            user = Trainer()
-            user.gym_uid = row["gym_uid"]
-        user.name = row["name"]
-        user.uid = row["uid"]
+            _class = Trainer
+            param["gym_uid"] = row["gym_uid"]
+        user = _class(**param)
         return user
     def check_permission(self):
         from flask import g
@@ -70,25 +74,14 @@ class User:
         cur.execute("SELECT * FROM tb_trainees WHERE user_uid = %s",  args)
         row = cur.fetchone()
         if row is not None:
-            res = Trainee()
-            res.uid = int(id)
-            res.name = name
-            res.phonenumber = self.phonenumber
-            res.password = None
-            res.gender = row["gender"]
-            res.gender = row["birthday"]
+            res = Trainee(int(id), name, gender, row["birthday"], self.phonenumber,None )
             cur.close()
             return res
         cur.execute("SELECT * FROM tb_trainers WHERE user_uid = %s",  args)
         row = cur.fetchone()
 
         if row is not None:
-            res = Trainer()
-            res.uid = int(id)
-            res.name = name
-            res.phonenumber = self.phonenumber
-            res.password = None
-            res.gym_uid = row["gym_uid"]
+            res = Trainer(int(id),name,row["gym_uid"], self.phonenumber)
             cur.close()
             return res
         cur.close()
@@ -114,18 +107,25 @@ class User:
         if row is None:
             return NotFoundAccount()
         user = None
+        _class = None
+        param = dict()
+        param["name"] = row["name"]
+        param["uid"] = row["uid"]
         if row["gym_uid"] is None:
-            user = Trainee()
-            user.gender = row["gender"]
-            user.birthday = row["birthday"]
+            param["gender"] = row["gender"]
+            param["birthday"] = row["birthday"]
+            _class = Trainee
         else:
-            user = Trainer()
-            user.gym_uid = row["gym_uid"]
-        user.name = row["name"]
-        user.uid = row["uid"]
+            _class = Trainer
+            param["gym_uid"] = row["gym_uid"]
+        user = _class(**param)
         return user
 class Trainer(User):
     gym_uid = None#int()
+    def __init__(self, uid:int,  name:str, gym_uid:int , phonenumber:str = None, password:str = None, token:str = None,):
+        User.__init__(self, uid, phonenumber, name, password)
+        self.gym_uid = gym_uid
+        pass
     def insert(self):
         from flask import g
         connection = g.connection
@@ -186,6 +186,11 @@ class Trainer(User):
 class Trainee(User):
     gender = None#str()
     birthday = None#datetime.date.
+    def __init__(self, uid:int,  name:str, gender:str ,birthday:datetime.date, phonenumber:str = None, password:str = None):
+        User.__init__(self, uid, phonenumber, name, password)
+        self.gender = gender
+        self.birthday = birthday
+        pass
     @staticmethod
     def list():
         from flask import g
