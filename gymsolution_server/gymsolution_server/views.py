@@ -315,7 +315,11 @@ def token_user_group_post(token, group):
 @app.route("/tokens/<string:token>/user/profileimage", methods=["PUT"])
 def token_user_profileimage_put(token:str):
     file = request.files['file']
-    return ""
+    content_type = request.headers["Content-Type"]
+    content_type = content_type.split(";")[0].strip().split("/")
+    response = dict()
+    status = 200
+    return "content type:{} {} body size:{} ".format( content_type[0] ,content_type[1], len(request.data))
 @app.route("/image/<string:image_hash>", methods=["GET"])
 def img_get(image_hash):
     return ""
