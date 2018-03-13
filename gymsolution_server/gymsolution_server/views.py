@@ -312,3 +312,10 @@ def token_user_group_post(token, group):
         res = trainee.enter_group(group)
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
+@app.route("/tokens/<string:token>/user/profileimage", methods=["PUT"])
+def token_user_profileimage_put(token:str):
+    file = request.files['file']
+    return ""
+@app.route("/image/<string:image_hash>", methods=["GET"])
+def img_get(image_hash):
+    return ""
