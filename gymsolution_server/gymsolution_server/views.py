@@ -323,3 +323,24 @@ def token_user_profileimage_put(token:str):
 @app.route("/image/<string:image_hash>", methods=["GET"])
 def img_get(image_hash):
     return ""
+@app.route("/groups",  methods = ["GET"])
+def grouplist_get():
+    response = dict()
+    status = 200
+    (response["msg"], status) = ("완료되었습니다", 200)
+    lat = request.args.get("lat", None)
+    long = request.args.get("long",None)
+    rad = request.args.get("rad", None)
+    token = request.headers.get("x-gs-token")
+    if token is None:
+        (response["msg"], status) = ("토큰이 존재하지 않습니다.", 403)
+    else:
+        t = type(models.User.get_by_token(token))
+        if t is models.NotFoundAccount:
+            (response["msg"], status) = ("토큰이 유효하지 않습니다.", 403)
+    if status != 200:
+        r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
+        return r
+    response["groups"] = models.Group.get_list(lat, long, rad)
+    r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
+    return r

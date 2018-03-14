@@ -74,6 +74,7 @@ class User:
         cur.execute("SELECT * FROM tb_trainees WHERE user_uid = %s",  args)
         row = cur.fetchone()
         if row is not None:
+            gender = row["gender"]
             res = Trainee(int(id), name, gender, row["birthday"], self.phonenumber,None )
             cur.close()
             return res
@@ -488,3 +489,37 @@ class Group:
         group["period"] = row["period"]
         group["title"] = row["title"]
         return Group(**group)
+     @staticmethod
+     def get_list(rat, long, rad):
+        from flask import g
+        connection = g.connection
+        cur = connection.cursor()
+        if None in (rat, long, rad):
+            cur.execute("""SELECT * FROM  tb_groups""")
+        else:
+            cur.execute("""SELECT * FROM  tb_groups
+           where gym_uid in 
+           (SELECT uid 
+           WHERE POW(%s,2) > POW(tb_gyms.latitude - %s, 2) + POW(tb_gyms.longitude - %s, 2) 
+            """, (float( rat), float( long),float( rad)))
+        row = cur.fetchone()
+        res = list()
+        while row is not None:
+            group = dict()
+            gym_uid = row["gym_uid"]
+            opener_uid = row["opener_uid"]
+            group["gym"] = Gym.find(gym_uid)
+            group["opener"] = User.find(opener_uid)
+            group["uid"] = row["uid"]
+            group["opened"] = row["opened"]
+            group["capacity"] = row["capacity"]
+            group["comment"] = row["comment"]
+            group["time"] = row["time"]
+            group["charge"] = row["charge"]
+            group["daysOfWeek"] = DaysOfWeeks(row["uid"])
+            group["start_date"] = row["start_date"]
+            group["period"] = row["period"]
+            group["title"] = row["title"]
+            row = cur.fetchone()
+            res.append(Group(**group))
+        return res
