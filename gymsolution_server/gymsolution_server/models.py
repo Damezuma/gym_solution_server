@@ -214,15 +214,15 @@ class Trainee(User):
         return res
     def enter_group(self, group):
         from flask import g
-        arg =  (self.uid, group.uid)
-        columns = "trainee_uid,group_uid"
-        args_str = ("%s," * len(arg))[:-1]
-        table = "tb_users_in_group"
-        qry = "INSERT INTO %s (%s) VALUES (%s)"%(table, columns, args_str)
         connection = g.connection
         cur = connection.cursor()
         try:
-            cur.execute(qry, arg)
+            cur.callproc("ENTER_GROUP", (group.uid, self.uid,0))
+            cur.execute('SELECT @_ENTER_GROUP_2')
+            res = cur.fetchone()["@_ENTER_GROUP_2"]
+            if res != 0:
+                print(res)
+                return False
         except err:
             print(err)
             return False
