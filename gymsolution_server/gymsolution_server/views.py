@@ -256,7 +256,9 @@ def groups_post():
     _time               = data.get("time",None)
     charge          = data.get("charge",None)
     daysOfWeek= data.get("daysOfWeek",None)
+    period = data.get("period",None)
     title = data.get("title", None)
+    start_date = data.get("start_date", None)
     if capacity is None:
         (response["msg"], status) = ("capacity이(가) 들어오지 않았습니다.", 400)
     elif comment is None:    
@@ -267,8 +269,12 @@ def groups_post():
         (response["msg"], status) = ("charge이(가) 들어오지 않았습니다.", 400)
     elif daysOfWeek is None:
         (response["msg"], status) = ("daysOfWeek이(가) 들어오지 않았습니다.", 400)
-    elif daysOfWeek is None:
+    elif title is None:
         (response["msg"], status) = ("title이(가) 들어오지 않았습니다.", 400)
+    elif period is None:
+        (response["msg"], status) = ("period이(가) 들어오지 않았습니다.", 400)
+    elif start_date is None:
+        (response["msg"], status) = ("start_date이(가) 들어오지 않았습니다.", 400)
     if status != 200:
         r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
         return r
@@ -278,7 +284,7 @@ def groups_post():
     _time = list(int(x) for x in _time)
     _time = time(_time[0], _time[1])
     gym = models.Gym.find(trainer.gym_uid)
-    group = models.Group(None,gym,"Y",trainer, capacity,comment, _time,charge, daysOfWeek,None,None , title)
+    group = models.Group(None,gym,"Y",trainer, capacity,comment, _time,charge, daysOfWeek,start_date,period , title)
     if not group.insert():
         (response["msg"], status) = ("DB에러가 났습니다.", 500)
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")

@@ -429,7 +429,8 @@ class Group:
         self.comment = comment
         self.charge = charge
         self.title = title
-
+        self.period = period
+        self.start_date = start_date
         from flask import g
         connection = g.connection
         cur = connection.cursor()
@@ -448,8 +449,8 @@ class Group:
         connection = g.connection
         cur = connection.cursor()
         daysOfWeek =("{}," * len(self.daysOfWeek)).format(*self.daysOfWeek)[:-1]
-        arg =  (self.gym.uid, self.opener.uid, self.opened, self.capacity, self.time.strftime("%H:%M:00"), self.charge, self.comment, self.title)
-        columns = "gym_uid,opener_uid, opened, capacity, time, charge, comment, title"
+        arg =  (self.gym.uid, self.opener.uid, self.opened, self.capacity, self.time.strftime("%H:%M:00"), self.charge, self.comment, self.title, self.period, self.start_date)
+        columns = "gym_uid,opener_uid, opened, capacity, time, charge, comment, title, period, start_date"
         args_str = ("%s," * len(arg))[:-1]
         table = "tb_groups"
         qry = "INSERT INTO %s (%s) VALUES (%s)"%(table, columns, args_str)
