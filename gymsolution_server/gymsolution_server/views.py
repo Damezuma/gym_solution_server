@@ -324,9 +324,23 @@ def token_user_group_post(token, group):
 def token_user_profileimage_put(token:str):
     file = request.files['file']
     content_type = request.headers["Content-Type"]
-    content_type = content_type.split(";")[0].strip().split("/")
+    encoding = content_type.split(";")[1].strip()
+    content_type =list(it.strip() for it in  content_type.split(";")[0].strip().split("/"))
+
     response = dict()
     status = 200
+    data = None
+    mime = None
+    if content_type == "image":
+        data = request.data
+        if encoding == "base64":
+            import base64
+            data = base64.decodebytes(data)
+
+    else:
+        data = request.files["img"]
+
+
     return "content type:{} {} body size:{} ".format( content_type[0] ,content_type[1], len(request.data))
 @app.route("/image/<string:image_hash>", methods=["GET"])
 def img_get(image_hash):
