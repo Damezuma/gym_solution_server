@@ -1,6 +1,7 @@
 from flask import g
 from pymysql import Error
 import datetime
+from gymsolution_server import app
 class Error:
     error_msg = ""
     def __init__(self, msg):
@@ -529,3 +530,29 @@ class Group:
             row = cur.fetchone()
             res.append(Group(**group))
         return res
+class Image:
+    def __init__(self, image_name:str, uploader, data, image_type):
+        if type(uploader) is int:
+            self.uploader_uid = uploader
+        else:
+            self.uploader_uid = uploader.uid
+        self.image_name = image_name
+        self.data = data
+        self.image_type = image_type
+    def upload(self):
+        from flask import g
+        connection = g.connection
+        cur = connection.cursor()
+        arg =  (self.uploader_uid, self.image_name, self.image_type)
+        columns = "uploader_uid, image_name, image_type"
+        args_str = ("%s," * len(arg))[:-1]
+        table = "tb_images"
+        qry = "INSERT INTO %s (%s) VALUES (%s)"%(table, columns, args_str)
+        cur.execute(qry, arg)
+        fp = open(app.config['UPLOAD_FOLDER'] +"/images/" + self.image_name, "wb+")
+        fp.write(self.data)
+        fp.close()
+        connection.commit()
+    @staticmethod
+    def get_list(uploader, offset = 0, count = 9):
+        return None

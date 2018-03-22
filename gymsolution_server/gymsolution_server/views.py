@@ -339,9 +339,39 @@ def token_user_profileimage_put(token:str):
 
     else:
         data = request.files["img"]
-
-
     return "content type:{} {} body size:{} ".format( content_type[0] ,content_type[1], len(request.data))
+@app.route("/user/images", methods=["POST"])
+def user_images_post():
+    content_type = request.headers["Content-Type"]
+    token = request.headers.get("x-gs-token")
+    response = dict()
+    (response["msg"], status) = ("완료되었습니다", 200)
+    user = None
+    if token is None:
+        (response["msg"], status) = ("토큰이 존재하지 않습니다.", 403)
+    else:
+        user = models.User.get_by_token(token)
+        if type(user) is models.NotFoundAccount:
+            (response["msg"], status) = ("토큰이 유효하지 않습니다.", 403)
+    if status != 200:
+        r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
+        return r
+    content_type = request.headers["Content-Type"]
+    encoding = content_type.split(";")[1].strip()
+    content_type =list(it.strip() for it in  content_type.split(";")[0].strip().split("/"))
+    if content_type[0] == "image":
+        data = request.data
+        if encoding == "base64":
+            import base64
+            data = base64.decodebytes(data)
+        import hashlib
+        hash512 = hashlib.sha512()
+        hash512.update(data)
+        filename = hash512.hexdigest()
+        image = models.Image(filename,user, data, content_type[1] )
+        image.upload()
+        r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
+        return r
 @app.route("/image/<string:image_hash>", methods=["GET"])
 def img_get(image_hash):
     return ""

@@ -14,6 +14,7 @@ def get_conection():
                              )
 
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = "/var/www/gymsolution_server/gymsolution_server"
 @app.before_request
 def before_request():
     g.connection = get_conection()
