@@ -555,4 +555,9 @@ class Image:
         connection.commit()
     @staticmethod
     def get_list(uploader, offset = 0, count = 9):
+
         return None
+class MeasurementInfo:
+    def __init__(self, image_name:str, uploader, data, image_type, weight, muscle, fat):
+
+        pass

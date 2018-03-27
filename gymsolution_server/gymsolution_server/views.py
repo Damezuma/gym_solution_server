@@ -372,6 +372,22 @@ def user_images_post():
         image.upload()
         r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
         return r
+@app.route("/user/images", methods=["GET"])
+def user_images_get():
+    token = request.headers.get("x-gs-token")
+    response = dict()
+    (response["msg"], status) = ("완료되었습니다", 200)
+    user = None
+    if token is None:
+        (response["msg"], status) = ("토큰이 존재하지 않습니다.", 403)
+    else:
+        user = models.User.get_by_token(token)
+        if type(user) is models.NotFoundAccount:
+            (response["msg"], status) = ("토큰이 유효하지 않습니다.", 403)
+    if status != 200:
+        r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
+        return r
+
 @app.route("/image/<string:image_hash>", methods=["GET"])
 def img_get(image_hash):
     return ""
@@ -396,3 +412,33 @@ def grouplist_get():
     response["groups"] = models.Group.get_list(lat, long, rad)
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
+
+@app.route("/user/physicinfos",methods=["POST"])
+def user_graph_data_post():
+    content_type = request.headers.get("content-type","")
+    token = request.headers.get("x-gs-token")
+    response = dict()
+    (response["msg"], status) = ("완료되었습니다", 200)
+    user = None
+    if token is None:
+        (response["msg"], status) = ("토큰이 존재하지 않습니다.", 403)
+    else:
+        user = models.User.get_by_token(token)
+        if type(user) is models.NotFoundAccount:
+            (response["msg"], status) = ("토큰이 유효하지 않습니다.", 403)
+    if status != 200:
+        r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
+        return r
+    form = request.data
+    form = json.loads(form.decode("utf-8"))
+    
+    img = form.get("image", None)
+    image_name = None
+    if img is not None:
+        import base64
+        import hashlib
+        hash512 = hashlib.sha512()
+        img = base64.decodebytes(img)
+        hash512.update(img)
+        image_name = hash512.hexdigest()
+    
