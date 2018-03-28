@@ -580,7 +580,8 @@ class MeasurementInfo:
         table = "tb_measurement_infos"
         qry = "INSERT INTO %s (%s) VALUES (%s)"%(table, columns, args_str)
         cur.execute(qry, arg)
-        fp = open(app.config['UPLOAD_FOLDER'] +"/images/" + self.image_name, "wb+")
-        fp.write(self.data)
-        fp.close()
+        if self.image_name is not None:
+            fp = open(app.config['UPLOAD_FOLDER'] +"/images/" + self.image_name, "wb+")
+            fp.write(self.data)
+            fp.close()
         connection.commit()

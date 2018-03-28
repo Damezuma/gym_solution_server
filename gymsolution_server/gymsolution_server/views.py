@@ -442,12 +442,12 @@ def user_graph_data_post():
         import base64
         import hashlib
         hash512 = hashlib.sha512()
-        img_type = img["type"]
+        img_type =str(img["type"])
         img = base64.decodebytes(img["data"])
         hash512.update(img)
         image_name = hash512.hexdigest()
     
-    measurement_log = models.MeasurementInfo(image_name, user, img, image_type, weight, muscle, fat)
+    measurement_log = models.MeasurementInfo(image_name, user, img, img_type, weight, muscle, fat)
     measurement_log.upload()
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
