@@ -449,3 +449,5 @@ def user_graph_data_post():
     
     measurement_log = models.MeasurementInfo(image_name, user, img, image_type, weight, muscle, fat)
     measurement_log.upload()
+    r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
+    return r
