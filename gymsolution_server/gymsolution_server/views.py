@@ -413,7 +413,7 @@ def grouplist_get():
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
 
-@app.route("/user/bodymesurements",methods=["POST"])
+@app.route("/user/bodymeasurements",methods=["POST"])
 def user_graph_data_post():
     content_type = request.headers.get("content-type","")
     token = request.headers.get("x-gs-token")
