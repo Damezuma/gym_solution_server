@@ -559,5 +559,28 @@ class Image:
         return None
 class MeasurementInfo:
     def __init__(self, image_name:str, uploader, data, image_type, weight, muscle, fat):
-
+        if type(uploader) is int:
+            self.uploader_uid = uploader
+        else:
+            self.uploader_uid = uploader.uid
+        self.image_name = image_name
+        self.data = data
+        self.image_type = image_type
+        self.weight = weight
+        self.muscle = muscle
+        self.fat = fat
         pass
+    def upload(self):
+        from flask import g
+        connection = g.connection
+        cur = connection.cursor()
+        arg =  (self.uploader_uid, self.image_name, self.image_type,self.weight, self.muscle, self.fat)
+        columns = "uploader_uid, image_name, image_type, weight, muscle, fat"
+        args_str = ("%s," * len(arg))[:-1]
+        table = "tb_measurement_infos"
+        qry = "INSERT INTO %s (%s) VALUES (%s)"%(table, columns, args_str)
+        cur.execute(qry, arg)
+        fp = open(app.config['UPLOAD_FOLDER'] +"/images/" + self.image_name, "wb+")
+        fp.write(self.data)
+        fp.close()
+        connection.commit()

@@ -413,7 +413,7 @@ def grouplist_get():
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
 
-@app.route("/user/physicinfos",methods=["POST"])
+@app.route("/user/bodymesurements",methods=["POST"])
 def user_graph_data_post():
     content_type = request.headers.get("content-type","")
     token = request.headers.get("x-gs-token")
@@ -434,11 +434,18 @@ def user_graph_data_post():
     
     img = form.get("image", None)
     image_name = None
+    weight = form.get("weight", None)
+    muscle = form.get("muscle", None)
+    fat = form.get("fat", None)
+    img_type = None
     if img is not None:
         import base64
         import hashlib
         hash512 = hashlib.sha512()
-        img = base64.decodebytes(img)
+        img_type = img["type"]
+        img = base64.decodebytes(img["data"])
         hash512.update(img)
         image_name = hash512.hexdigest()
     
+    measurement_log = models.MeasurementInfo(image_name, user, img, image_type, weight, muscle, fat)
+    measurement_log.upload()
