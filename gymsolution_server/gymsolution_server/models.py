@@ -549,7 +549,8 @@ class Image:
         table = "tb_images"
         qry = "INSERT INTO %s (%s) VALUES (%s)"%(table, columns, args_str)
         cur.execute(qry, arg)
-        fp = open(app.config['UPLOAD_FOLDER'] +"/images/" + self.image_name, "wb+")
+        file_path = "{}/images/{}.{}".format(app.config['UPLOAD_FOLDER'], self.image_name, self.image_type)
+        fp = open(file_path, "wb+")
         fp.write(self.data)
         fp.close()
         connection.commit()
@@ -557,12 +558,12 @@ class Image:
     def get_list(uploader, offset = 0, count = 9):
 
         return None
+
 class MeasurementInfo:
     def __init__(self, image_name:str, uploader, data, image_type, weight, muscle, fat):
         if type(uploader) is int:
-            self.uploader_uid = uploader
-        else:
-            self.uploader_uid = uploader.uid
+            uploader = User.find(uploader)
+        self.uploader = uploader
         self.image_name = image_name
         self.data = data
         self.image_type = image_type
@@ -581,7 +582,42 @@ class MeasurementInfo:
         qry = "INSERT INTO %s (%s) VALUES (%s)"%(table, columns, args_str)
         cur.execute(qry, arg)
         if self.image_name is not None:
-            fp = open(app.config['UPLOAD_FOLDER'] +"/images/" + self.image_name, "wb+")
+            file_path = "{}/images/{}.{}".format(app.config['UPLOAD_FOLDER'], self.image_name, self.image_type)
+            fp = open(file_path, "wb+")
             fp.write(self.data)
             fp.close()
         connection.commit()
+
+class MeasurementInfoList:
+    @staticmethod
+    def get(uploader):
+        if type(uploader) is int:
+            uploader = User.find(uploader)
+        from flask import g
+        connection = g.connection
+        cur = connection.cursor()
+        qry = \
+        """SELECT *
+        FROM tb_measurement_infos
+        WHERE uploader_uid = %s"""
+        cur.execute(qry, (uploader.uid))
+        res = list()
+        row = cur.fetchone()
+        while row is not None:
+            item = dict()
+            item["upload_datetime"] = row["upload_datetime"]
+            item["uploader"] = uploader
+            item["image"] = None
+            if row["image_name"] is not None:
+                item["image"] = "https://gym.hehehee.net/images/{}.{}".format(row["image_name"], row["image_type"])
+            item["weight"] = row["weight"]
+            item["muscle"] = row["muscle"]
+            item["fat"] = row["fat"]
+            res.append(item)
+            row = cur.fetchone()
+        return res
+
+        
+        
+        
+    
