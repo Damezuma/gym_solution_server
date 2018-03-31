@@ -138,27 +138,35 @@ def token_get():
 
     r = Response(response= json.dumps(response), status=status, mimetype="application/json")
     return r
-@app.route("/tokens/<string:token>/user", methods=["GET"])
-def token_user_get(token:str):
+@app.route("/user", methods=["GET"])
+def token_user_get():
     response = dict()
     (response["msg"], status) = ("완료되었습니다", 200)
-    r = models.User.get_by_token(token)
-    if type(r) == models.NotFoundAccount:
-         (response["msg"], status) = ("토큰이 유효하지 않습니다.", 403)
+    token = request.headers.get("x-gs-token", None)
+    if token is None:
+        (response["msg"], status) = ("토큰이 존재하지 않습니다.", 403)
     else:
-        response["user"] = r
+        r = models.User.get_by_token(token)
+        if type(r) == models.NotFoundAccount:
+             (response["msg"], status) = ("토큰이 유효하지 않습니다.", 403)
+        else:
+            response["user"] = r
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
-@app.route("/tokens/<string:token>/user/groups", methods=["GET"])
-def token_user_group_get(token:str):
+@app.route("/user/groups", methods=["GET"])
+def token_user_group_get():
     response = dict()
     (response["msg"], status) = ("완료되었습니다", 200)
-    r = models.User.get_by_token(token)
-    if type(r) == models.NotFoundAccount:
-         (response["msg"], status) = ("토큰이 유효하지 않습니다.", 403)
+    token = request.headers.get("x-gs-token", None)
+    if token is None:
+        (response["msg"], status) = ("토큰이 존재하지 않습니다.", 403)
     else:
-        res = r.get_groups()
-        response["groups"] = res
+        r = models.User.get_by_token(token)
+        if type(r) == models.NotFoundAccount:
+             (response["msg"], status) = ("토큰이 유효하지 않습니다.", 403)
+        else:
+            res = r.get_groups()
+            response["groups"] = res
     #TODO:
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
@@ -289,12 +297,13 @@ def groups_post():
         (response["msg"], status) = ("DB에러가 났습니다.", 500)
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
-@app.route("/tokens/<string:token>/user/groups/<int:group>", methods=["PUT"])
-def token_user_group_post(token, group):
+@app.route("/user/groups/<int:group>", methods=["PUT"])
+def token_user_group_post(group):
     response = dict()
     status = 200
     (response["msg"], status) = ("완료되었습니다", 200)
     trainee = None
+    token = request.headers.get("x-gs-token", None)
     if token is None:
         (response["msg"], status) = ("토큰이(가) 존재하지 않습니다.", 403)
     else:
@@ -320,33 +329,15 @@ def token_user_group_post(token, group):
             (response["msg"], status) = ("그룹에 들어갈 수 없습니다.", 404)
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
-@app.route("/tokens/<string:token>/user/profileimage", methods=["PUT"])
-def token_user_profileimage_put(token:str):
-    file = request.files['file']
-    content_type = request.headers["Content-Type"]
-    encoding = content_type.split(";")[1].strip()
-    content_type =list(it.strip() for it in  content_type.split(";")[0].strip().split("/"))
 
-    response = dict()
-    status = 200
-    data = None
-    mime = None
-    if content_type == "image":
-        data = request.data
-        if encoding == "base64":
-            import base64
-            data = base64.decodebytes(data)
-
-    else:
-        data = request.files["img"]
-    return "content type:{} {} body size:{} ".format( content_type[0] ,content_type[1], len(request.data))
 @app.route("/user/images", methods=["POST"])
 def user_images_post():
     content_type = request.headers["Content-Type"]
-    token = request.headers.get("x-gs-token")
+    
     response = dict()
     (response["msg"], status) = ("완료되었습니다", 200)
     user = None
+    token = request.headers.get("x-gs-token", None)
     if token is None:
         (response["msg"], status) = ("토큰이 존재하지 않습니다.", 403)
     else:
