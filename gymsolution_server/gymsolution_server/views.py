@@ -288,9 +288,16 @@ def groups_post():
         return r
     if type(daysOfWeek) is list:
         daysOfWeek =("{}," * len(daysOfWeek)).format(*daysOfWeek)[:-1]
-    _time = _time.split(":")
-    _time = list(int(x) for x in _time)
-    _time = time(_time[0], _time[1])
+    t = None
+    try:
+        t = _time.split(":")
+        t = list(int(x) for x in t)
+        t = time(t[0], t[1])
+    except:
+        (response["msg"], status) = ("time이 잘못들어왔습니다. time은 hour:minute형식으로 들어와야 합니다. 보낸 데이터는 {}입니다.".format(_time), 400)
+        r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
+        return r
+    _time = t
     gym = models.Gym.find(trainer.gym_uid)
     group = models.Group(None,gym,"Y",trainer, capacity,comment, _time,charge, daysOfWeek,start_date,period , title)
     if not group.insert():
