@@ -468,3 +468,22 @@ def user_bodymeasurements_get():
     response["list"] = models.MeasurementInfoList.get(user)
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
+@app.route("/gym/<int:uid>/trainers")
+def gym_trainer_get():
+    content_type = request.headers.get("content-type","")
+    token = request.headers.get("x-gs-token")
+    response = dict()
+    (response["msg"], status) = ("완료되었습니다", 200)
+    user = None
+    if token is None:
+        (response["msg"], status) = ("토큰이 존재하지 않습니다.", 403)
+    else:
+        user = models.User.get_by_token(token)
+        if type(user) is models.NotFoundAccount:
+            (response["msg"], status) = ("토큰이 유효하지 않습니다.", 403)
+    if status != 200:
+        r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
+        return r
+    response["list"] = models.MeasurementInfoList.get(user)
+    r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
+    return r
