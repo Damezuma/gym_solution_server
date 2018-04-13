@@ -395,6 +395,23 @@ class Gym:
             row = cur.fetchone()
         cur.close()
         return res
+    def get_trainers(self):
+        from flask import g
+        connection = g.connection
+        cur = connection.cursor()
+        cur.execute(
+            """SELECT *
+            FROM tb_users WHERE uid in
+                (SELECT user_uid
+                FROM tb_trainers FROM gym_uid = %s)""",(self.uid))
+        res = list();
+        row = cur.fetchone()
+        while row is not None:
+            trainer = Trainer(row["uid"], row["name"], self.uid)
+            res.append(trainer)
+            row = cur.fetchone()
+        cur.close()
+        return res
 class DaysOfWeeks:
     group_uid = -1
     def __init__(self, uid:int):
@@ -575,7 +592,7 @@ class MeasurementInfo:
         from flask import g
         connection = g.connection
         cur = connection.cursor()
-        arg =  (self.uploader_uid, self.image_name, self.image_type,self.weight, self.muscle, self.fat)
+        arg =  (self.uploader.uid, self.image_name, self.image_type,self.weight, self.muscle, self.fat)
         columns = "uploader_uid, image_name, image_type, weight, muscle, fat"
         args_str = ("%s," * len(arg))[:-1]
         table = "tb_measurement_infos"
@@ -599,14 +616,14 @@ class MeasurementInfoList:
         qry = \
         """SELECT *
         FROM tb_measurement_infos
-        WHERE uploader_uid = %s"""
+        WHERE uploader_uid = %s ORDER BY upload_datetime DESC"""
         cur.execute(qry, (uploader.uid))
         res = list()
         row = cur.fetchone()
         while row is not None:
             item = dict()
             item["upload_datetime"] = row["upload_datetime"]
-            item["uploader"] = uploader
+            #item["uploader"] = uploader
             item["image"] = None
             if row["image_name"] is not None:
                 item["image"] = "https://gym.hehehee.net/images/{}.{}".format(row["image_name"], row["image_type"])

@@ -2,7 +2,7 @@
 Routes and views for the flask application.
 """
 from datetime import datetime,time
-from flask import render_template, views, request
+from flask import render_template, views, request, send_file, send_from_directory
 from flask import Response
 from gymsolution_server import app
 import gymsolution_server.models as models
@@ -388,7 +388,7 @@ def user_images_get():
 
 @app.route("/images/<string:name>", methods=["GET"])
 def images_get(name):
-    return send_file(app.config['UPLOAD_FOLDER'] +"/images/" + name) 
+    return send_from_directory(app.config['UPLOAD_FOLDER'] +"/images", name)
 @app.route("/groups",  methods = ["GET"])
 def grouplist_get():
     response = dict()
@@ -429,8 +429,8 @@ def user_bodymeasurements_post():
         return r
     form = request.data
     form = json.loads(form.decode("utf-8"))
-    
-    img = form.get("image", None)
+    print(form)
+    img = form.get("img", None)
     image_name = None
     weight = form.get("weight", None)
     muscle = form.get("muscle", None)
@@ -441,7 +441,8 @@ def user_bodymeasurements_post():
         import hashlib
         hash512 = hashlib.sha512()
         img_type =str(img["type"])
-        img = base64.decodebytes(img["data"])
+        img = base64.decodebytes(img["data"].encode())
+        
         hash512.update(img)
         image_name = hash512.hexdigest()
     
@@ -469,7 +470,7 @@ def user_bodymeasurements_get():
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
 @app.route("/gym/<int:uid>/trainers")
-def gym_trainer_get():
+def gym_trainer_get(uid):
     content_type = request.headers.get("content-type","")
     token = request.headers.get("x-gs-token")
     response = dict()
@@ -484,6 +485,7 @@ def gym_trainer_get():
     if status != 200:
         r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
         return r
-    response["list"] = models.MeasurementInfoList.get(user)
+    gym = models.Gym(uid)
+    response["trainers"] = gym.get_trainers()
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
