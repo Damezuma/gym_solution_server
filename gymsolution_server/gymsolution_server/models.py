@@ -56,6 +56,8 @@ class User:
         else:
             _class = Trainer
             param["gym_uid"] = row["gym_uid"]
+            param["self_introduction_text"] = row["self_introduction_text"]
+            param["profile_image"] = row["profile_image"]
         user = _class(**param)
         return user
     def check_permission(self):
@@ -83,7 +85,7 @@ class User:
         row = cur.fetchone()
 
         if row is not None:
-            res = Trainer(int(id),name,row["gym_uid"], self.phonenumber)
+            res = Trainer(int(id),name,row["gym_uid"], self.phonenumber, None, None, row["self_introduction_text"], row["profile_image"])
             cur.close()
             return res
         cur.close()
@@ -124,9 +126,13 @@ class User:
         return user
 class Trainer(User):
     gym_uid = None#int()
-    def __init__(self, uid:int,  name:str, gym_uid:int , phonenumber:str = None, password:str = None, token:str = None,):
+    self_introduction_text = None
+    profile_image = None
+    def __init__(self, uid:int,  name:str, gym_uid:int , phonenumber:str = None, password:str = None, token:str = None, self_introduction_text:str = None, profile_image:str = None):
         User.__init__(self, uid, phonenumber, name, password)
         self.gym_uid = gym_uid
+        self.self_introduction_text = self_introduction_text
+        self.profile_image = profile_image
         pass
     def insert(self):
         from flask import g
@@ -184,6 +190,23 @@ class Trainer(User):
             row = cur.fetchone()
         cur.close()
         return res
+    def update(self,**args):
+        
+        values = dict()
+        for it in args:
+            if it == "profile_image":
+                return
+            else:
+                values[it] = args[it]
+        from flask import g
+        connection = g.connection
+        cur = connection.cursor()
+        set_command = ",".join("{} = %s".format(it) for it in values)
+        parameters = tuple(values.values())
+        cur.execute("UPDATE tb_trainers SET {} WHERE user_uid = {}".format(set_command, self.uid), parameters)
+        connection.commit()
+        cur.close()
+
         #
 class Trainee(User):
     gender = None#str()
@@ -400,14 +423,11 @@ class Gym:
         connection = g.connection
         cur = connection.cursor()
         cur.execute(
-            """SELECT *
-            FROM tb_users WHERE uid in
-                (SELECT user_uid
-                FROM tb_trainers FROM gym_uid = %s)""",(self.uid))
+            """SELECT * FROM tb_users JOIN tb_trainers ON tb_users.uid = tb_trainers.user_uid WHERE gym_uid = %s""",(self.uid))
         res = list();
         row = cur.fetchone()
         while row is not None:
-            trainer = Trainer(row["uid"], row["name"], self.uid)
+            trainer = Trainer(row["uid"], row["name"], self.uid, None, None, None, row["self_introduction_text"], row["profile_image"])
             res.append(trainer)
             row = cur.fetchone()
         cur.close()
