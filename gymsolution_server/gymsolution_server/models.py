@@ -663,9 +663,11 @@ class MeasurementInfoList:
             item["image"] = None
             if row["image_name"] is not None:
                 item["image"] = "https://gym.hehehee.net/images/{}.{}".format(row["image_name"], row["image_type"])
+
             item["weight"] = row["weight"]
             item["muscle"] = row["muscle"]
             item["fat"] = row["fat"]
+            item["comment"] = row["comment"]
             res.append(item)
             row = cur.fetchone()
         return res

@@ -529,3 +529,44 @@ def trainer_profileimage_put(property_name):
     user.update(**{property_name: request.data.decode("utf-8")})
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
+@app.route("/groups/<int:group_uid>/users/<int:trainee_uid>/bodymeasurements", methods=["POST"])
+def groups_GROUPUID_users_TRAINEE_UID_bodymeasurements_post(group_uid, trainee_uid):
+#TODO: 기존 코드를 기반으로 구현해야 함, 아래 코드는 아직 구현된 것이 아님
+    content_type = request.headers.get("content-type","")
+    token = request.headers.get("x-gs-token")
+    response = dict()
+    (response["msg"], status) = ("완료되었습니다", 200)
+    user = None
+    if token is None:
+        (response["msg"], status) = ("토큰이 존재하지 않습니다.", 403)
+    else:
+        user = models.User.get_by_token(token)
+        if type(user) is models.NotFoundAccount:
+            (response["msg"], status) = ("토큰이 유효하지 않습니다.", 403)
+    if status != 200:
+        r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
+        return r
+    form = request.data
+    form = json.loads(form.decode("utf-8"))
+    print(form)
+    img = form.get("img", None)
+    image_name = None
+    weight = form.get("weight", None)
+    muscle = form.get("muscle", None)
+    fat = form.get("fat", None)
+    comment = form.get("comment", None)
+    img_type = None
+    if img is not None:
+        import base64
+        import hashlib
+        hash512 = hashlib.sha512()
+        img_type =str(img["type"])
+        img = base64.decodebytes(img["data"].encode())
+        
+        hash512.update(img)
+        image_name = hash512.hexdigest()
+    
+    measurement_log = models.MeasurementInfo(image_name, user, img, img_type, weight, muscle, fat)
+    measurement_log.upload()
+    r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
+    return r
