@@ -435,6 +435,7 @@ def user_bodymeasurements_post():
     weight = form.get("weight", None)
     muscle = form.get("muscle", None)
     fat = form.get("fat", None)
+    comment = form.get("comment", None)
     img_type = None
     if img is not None:
         import base64
@@ -506,8 +507,8 @@ def trainers_group_get(uid):
     #TODO:
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
-@app.route("/trainer/introduction", methods=["PUT"])
-def trainer_introduction_put():
+@app.route("/trainer/<string:property_name>", methods=["PUT"])
+def trainer_profileimage_put(property_name):
     content_type = request.headers.get("content-type","")
     token = request.headers.get("x-gs-token")
     response = dict()
@@ -524,6 +525,7 @@ def trainer_introduction_put():
     if status != 200:
         r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
         return r
-    user.update(self_introduction_text = request.data.decode("utf-8"))
+    #user.update(self_introduction_text = request.data.decode("utf-8"))
+    user.update(**{property_name: request.data.decode("utf-8")})
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r

@@ -191,11 +191,26 @@ class Trainer(User):
         cur.close()
         return res
     def update(self,**args):
-        
+        from flask import request
         values = dict()
         for it in args:
             if it == "profile_image":
-                return
+                import base64
+                data = base64.decodebytes(values[it])
+                import hashlib
+                hash512 = hashlib.sha512()
+                hash512.update(data)
+                filename = hash512.hexdigest()
+                content_type =  request.headers.get("content-type", None)
+                if content_type is None:
+                    return False, "content-type이 올바르지 않습니다."
+                ext = content_type.split("/")[1].strip()
+                filename = filename + "." + ext
+                file_path = "{}/images/{}".format(app.config['UPLOAD_FOLDER'], filename)
+                fp = open(file_path, "wb+")
+                fp.write(data)
+                fp.close()
+                values["profile_image"] = filename
             else:
                 values[it] = args[it]
         from flask import g
@@ -597,7 +612,7 @@ class Image:
         return None
 
 class MeasurementInfo:
-    def __init__(self, image_name:str, uploader, data, image_type, weight, muscle, fat):
+    def __init__(self, image_name:str, uploader, data, image_type, weight, muscle, fat, comment):
         if type(uploader) is int:
             uploader = User.find(uploader)
         self.uploader = uploader
@@ -607,13 +622,14 @@ class MeasurementInfo:
         self.weight = weight
         self.muscle = muscle
         self.fat = fat
+        self.comment = comment
         pass
     def upload(self):
         from flask import g
         connection = g.connection
         cur = connection.cursor()
-        arg =  (self.uploader.uid, self.image_name, self.image_type,self.weight, self.muscle, self.fat)
-        columns = "uploader_uid, image_name, image_type, weight, muscle, fat"
+        arg =  (self.uploader.uid, self.image_name, self.image_type,self.weight, self.muscle, self.fat, self.comment)
+        columns = "uploader_uid, image_name, image_type, weight, muscle, fat, comment"
         args_str = ("%s," * len(arg))[:-1]
         table = "tb_measurement_infos"
         qry = "INSERT INTO %s (%s) VALUES (%s)"%(table, columns, args_str)
