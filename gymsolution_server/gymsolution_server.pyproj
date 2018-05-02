@@ -30,12 +30,31 @@
     <Compile Include="gymsolution_server\models.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="gymsolution_server\view\group.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="gymsolution_server\view\gym.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="gymsolution_server\view\images.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="gymsolution_server\view\self.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="gymsolution_server\view\trainer.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="gymsolution_server\view\user.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="runserver.py" />
     <Compile Include="gymsolution_server\__init__.py" />
     <Compile Include="gymsolution_server\views.py" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="gymsolution_server\" />
+    <Folder Include="gymsolution_server\view\" />
     <Folder Include="gymsolution_server\static\" />
     <Folder Include="gymsolution_server\static\content\" />
     <Folder Include="gymsolution_server\static\fonts\" />
