@@ -4,6 +4,10 @@ from flask import Response
 from gymsolution_server import app
 import gymsolution_server.models as models
 import json
+from gymsolution_server import json_handler, RuntimeError
+
+
+
 
 @app.route("/groups", methods=["POST"])
 def groups_post():
@@ -103,42 +107,57 @@ def grouplist_get():
     return r
 @app.route("/groups/<int:group_uid>/users/<int:trainee_uid>/bodymeasurements", methods=["POST"])
 def groups_GROUPUID_users_TRAINEE_UID_bodymeasurements_post(group_uid, trainee_uid):
-#TODO: 기존 코드를 기반으로 구현해야 함, 아래 코드는 아직 구현된 것이 아님
-    content_type = request.headers.get("content-type","")
-    token = request.headers.get("x-gs-token")
     response = dict()
-    (response["msg"], status) = ("완료되었습니다", 200)
-    user = None
-    if token is None:
-        (response["msg"], status) = ("토큰이 존재하지 않습니다.", 403)
-    else:
-        user = models.User.get_by_token(token)
-        if type(user) is models.NotFoundAccount:
-            (response["msg"], status) = ("토큰이 유효하지 않습니다.", 403)
-    if status != 200:
-        r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
-        return r
-    form = request.data
-    form = json.loads(form.decode("utf-8"))
-    print(form)
-    img = form.get("img", None)
-    image_name = None
-    weight = form.get("weight", None)
-    muscle = form.get("muscle", None)
-    fat = form.get("fat", None)
-    comment = form.get("comment", None)
-    img_type = None
-    if img is not None:
-        import base64
-        import hashlib
-        hash512 = hashlib.sha512()
-        img_type =str(img["type"])
-        img = base64.decodebytes(img["data"].encode())
+    try:
+        content_type = request.headers.get("content-type","")
+        token = request.headers.get("x-gs-token")
+        (response["msg"], status) = ("완료되었습니다", 200)
+        user = None
+        if token is None:
+            raise RuntimeError("토큰이 존재하지 않습니다.", 403)
+        else:
+            user = models.User.get_by_token(token)
+            if type(user) is models.NotFoundAccount:
+                raise RuntimeError("토큰이 유효하지 않습니다.", 403)
+                
+        if status != 200:
+            r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
+            return r
+        #토큰이 올바른 지 확인했다면, 이제 이 토큰이 해당 그룹의 개설자인지 확인해야 함
+        group = models.Group.find(group_uid)
+        if group is None:
+            raise RuntimeError("그룹이 유효하지 않습니다.", 403)
+        if group.opener.uid != user.uid:
+            raise RuntimeError("그룹의 개설자가 아닙니다.", 403)
+        #TODO: 날짜까지 반영해야 함
+        trainee = models.User.find(trainee_uid)
+        if type(trainee) is not models.Trainee:
+            raise RuntimeError("유저가 잘못되었습니다.", 403)
+        if not group in trainee.get_groups():
+            raise RuntimeError("해당 그룹에 유저가 가입하지 않았습니다.", 403)
+        form = request.data
+        form = json.loads(form.decode("utf-8"))
+        print(form)
+        img = form.get("img", None)
+        image_name = None
+        weight = form.get("weight", None)
+        muscle = form.get("muscle", None)
+        fat = form.get("fat", None)
+        comment = form.get("comment", None)
+        img_type = None
+        if img is not None:
+            import base64
+            import hashlib
+            hash512 = hashlib.sha512()
+            img_type =str(img["type"])
+            img = base64.decodebytes(img["data"].encode())
         
-        hash512.update(img)
-        image_name = hash512.hexdigest()
+            hash512.update(img)
+            image_name = hash512.hexdigest()
     
-    measurement_log = models.MeasurementInfo(image_name, user, img, img_type, weight, muscle, fat)
-    measurement_log.upload()
+        measurement_log = models.MeasurementInfo(image_name, user, img, img_type, weight, muscle, fat)
+        measurement_log.upload()
+    except  RuntimeError as e:
+        return e.to_response()
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r

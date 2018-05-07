@@ -4,7 +4,7 @@ from flask import Response
 from gymsolution_server import app
 import gymsolution_server.models as models
 import json
-
+from gymsolution_server import json_handler
 @app.route("/users", methods=["POST"])
 def users_post():
     

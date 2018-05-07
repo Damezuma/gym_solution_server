@@ -4,7 +4,7 @@ from flask import Response
 from gymsolution_server import app
 import gymsolution_server.models as models
 import json
-
+from gymsolution_server import json_handler
 
 @app.route("/images/<string:name>", methods=["GET"])
 def images_get(name):

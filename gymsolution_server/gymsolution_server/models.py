@@ -472,6 +472,13 @@ class Group:
      period = None
      title = None#string
      user_count = None#int
+     def __eq__(self, obj):
+         if self is obj:
+             return True
+         if type(obj) is Group:
+             return obj.uid == self.uid
+         return False
+
      def __init__(self, uid, gym, opened, opener, capacity, comment, time,charge, daysOfWeek, start_date, period, title):
 
         self.uid = uid

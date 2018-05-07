@@ -4,7 +4,7 @@ from flask import Response
 from gymsolution_server import app
 import gymsolution_server.models as models
 import json
-
+from gymsolution_server import json_handler
 
 
 @app.route("/trainers/<int:uid>/groups", methods=["GET"])
@@ -21,9 +21,10 @@ def trainers_group_get(uid):
         else:
             r = models.Trainer(uid, None, None)
             response["groups"] = res
-    #TODO:
+
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
+
 @app.route("/trainer/<string:property_name>", methods=["PUT"])
 def trainer_profileimage_put(property_name):
     content_type = request.headers.get("content-type","")

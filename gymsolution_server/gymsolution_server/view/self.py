@@ -4,7 +4,7 @@ from flask import Response
 from gymsolution_server import app
 import gymsolution_server.models as models
 import json
-
+from gymsolution_server import json_handler
 @app.route("/user", methods=["GET"])
 def token_user_get():
     response = dict()
@@ -34,7 +34,7 @@ def token_user_group_get():
         else:
             res = r.get_groups()
             response["groups"] = res
-    #TODO:
+
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
 @app.route("/user/groups/<int:group>", methods=["PUT"])
