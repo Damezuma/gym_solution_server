@@ -624,7 +624,8 @@ class Image:
         return map(lambda  row: Image(uploader= row["uploader_uid"], 
                                       upload_datetime =row["upload_datetime"],
                                         image_type = row["image_type"],
-                                        image_name = row["image_name"])
+                                        image_name = row["image_name"],
+                                        data = None)
             ,rows)
 
 class MeasurementInfo:
@@ -687,8 +688,35 @@ class MeasurementInfoList:
             res.append(item)
             row = cur.fetchone()
         return res
+class Review:
+    def __init__(self, uid:int, trainer:Trainer, trainee:Trainee, comments:str, grade:float):
+        self.uid = uid
+        self.trainer = trainer
+        self.trainee = trainee
+        self.comments = comments
+        self.grade = grade
+        pass
+    def insert(self):
+        pass
+    @staticmethod
+    def get_list(user):
+        from flask import g
+        connection = g.connection
+        cur = connection.cursor()
+        qry = "SELECT * from tb_reviews WHERE `trainer-uid` = %s"
+        cur.execute(qry, (user.uid))
 
-        
-        
-        
-    
+        res = list()
+
+        row = cur.fetchone()
+        while row is not None:
+            item = Review(
+                uid = row["uid"],
+                trainer = User.find(row["trainer-uid"]),
+                trainee = User.find(row["trainee-uid"]),
+                comments = row["comments"],
+                grade = row["grade"]
+                          )
+            res.append(item)
+            row  = cur.fetchone()
+            return res

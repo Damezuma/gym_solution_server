@@ -62,7 +62,9 @@ def trainers_UID_images_get(uid):
         trainer = models.Trainer.find(uid)
         if type(trainer) is not models.Trainer:
             return RuntimeError("해당 uid는 트레이너가 아닙니다.", 403)
-        res = models.Image.get_list(trainer)
+        res =models.Image.get_list(trainer)
+        for it in res:
+            it.image_name = "https://gym.hehehee.net/images/{}".format(it.image_name)
         response["images"] = res
     except RuntimeError as e:
         return e.to_response()
