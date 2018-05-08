@@ -3,6 +3,7 @@ The flask application package.
 """
 import pymysql
 from flask import Flask, g
+from datetime import time
 class RuntimeError(Exception):
     def __init__(self, msg, code):
         self.message = msg

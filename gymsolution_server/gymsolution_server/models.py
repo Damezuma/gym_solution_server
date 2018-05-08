@@ -590,7 +590,7 @@ class Group:
             res.append(Group(**group))
         return res
 class Image:
-    def __init__(self, image_name:str, uploader, data, image_type):
+    def __init__(self, image_name:str, uploader, data, image_type, upload_datetime):
         if type(uploader) is int:
             self.uploader_uid = uploader
         else:
@@ -614,9 +614,18 @@ class Image:
         fp.close()
         connection.commit()
     @staticmethod
-    def get_list(uploader, offset = 0, count = 9):
-
-        return None
+    def get_list(uploader):
+        from flask import g
+        connection = g.connection
+        cur = connection.cursor()
+        qry = "SELECT * FROM tb_images WHERE uploader_uid = %s"
+        cur.execute(qry, (uploader.uid))
+        rows = cur.fetchall()
+        return map(lambda  row: Image(uploader= row["uploader_uid"], 
+                                      upload_datetime =row["upload_datetime"],
+                                        image_type = row["image_type"],
+                                        image_name = row["image_name"])
+            ,rows)
 
 class MeasurementInfo:
     def __init__(self, image_name:str, uploader, data, image_type, weight, muscle, fat, comment):

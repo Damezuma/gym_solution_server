@@ -24,6 +24,7 @@ def users_post():
         data = json.loads(data.decode("utf-8"))
     else:
         data = request.form
+    print(data)
     name = data.get("name")
     password = data.get("password")
     phonenumber = data.get("phonenumber")
@@ -53,14 +54,14 @@ def users_post():
         elif birthday is None:
             status, response["msg"] = (400 , "'birthday'이(가) 누락되었습니다.")
         else:
-            user = models.Trainee()
+            user = models.Trainee(None,None,None,None)
             user.gender = gender
             user.birthday = birthday
     elif type == "trainer":
         if fitness_club_idx is None:
             status, response["msg"] = (400 , "'fitness_club_idx'이(가) 누락되었습니다.")
         else:
-            user = models.Trainer()
+            user = models.Trainer(0, None, None, None)
             user.gym_uid = int(fitness_club_idx)
     else:
         status, response["msg"] = (400 , "'type'이(가) 누락되었습니다.")
@@ -69,7 +70,7 @@ def users_post():
         user.phonenumber = phonenumber
         user.password = password.strip()
         if user.insert() == False:
-            status , response["msg"] = (400, "전화번호가 중복됩니다")
+            (status , response["msg"] )= (400, "전화번호가 중복됩니다")
     if status != 200:
         data = request.data
         response["body"] = data.decode("utf-8")
