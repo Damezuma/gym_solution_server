@@ -154,7 +154,15 @@ def user_bodymeasurements_post():
         hash512.update(img)
         image_name = hash512.hexdigest()
     
-    measurement_log = models.MeasurementInfo(image_name, user, img, img_type, weight, muscle, fat)
+    measurement_log = models.MeasurementInfo(
+        image_name=image_name,
+        uploader=user,
+        data=img,
+        image_type=img_type,
+        weight=weight,
+        muscle=muscle,
+        fat=fat,
+        comment=comment)
     measurement_log.upload()
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
