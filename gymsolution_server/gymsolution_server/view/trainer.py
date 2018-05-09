@@ -58,10 +58,10 @@ def trainers_UID_images_get(uid):
             raise RuntimeError("토큰이 존재하지 않습니다.",400)
         user = models.User.get_by_token(token)
         if type(user) is models.NotFoundAccount:
-            return RuntimeError("토큰이 유효하지 않습니다.", 403)
+            raise RuntimeError("토큰이 유효하지 않습니다.", 403)
         trainer = models.Trainer.find(uid)
         if type(trainer) is not models.Trainer:
-            return RuntimeError("해당 uid는 트레이너가 아닙니다.", 403)
+            raise RuntimeError("해당 uid는 트레이너가 아닙니다.", 403)
         res =models.Image.get_list(trainer)
         for it in res:
             it.image_name = "https://gym.hehehee.net/images/{}".format(it.image_name)
