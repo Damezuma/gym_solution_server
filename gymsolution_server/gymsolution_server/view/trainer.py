@@ -110,3 +110,24 @@ def trainers_UID_images_post(uid):
     (response["msg"], status) = ("완료되었습니다", 200)
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
+@app.route("/traines/<int:uid>/reviews", methods=["GET"])
+def trainers_UID_reviews_get(uid:int):
+    response = dict()
+    response["msg"] = "완료되었습니다"
+    status = 200
+    try:
+        token = request.headers.get("x-gs-token", None)
+        if token is None:
+            raise RuntimeError("토큰이 존재하지 않습니다.",400)
+        user = models.User.get_by_token(token)
+        if type(user) is not models.Trainer:
+            raise RuntimeError("토큰이 유효하지 않습니다.", 403)
+        trainer = models.Trainer.find(uid)
+        if type(trainer) is not models.Trainer:
+            raise RuntimeError("해당 uid는 트레이너가 아닙니다.", 403)
+        res = models.Review.get_list(trainer)
+        response["reviews"]  = res
+    except RuntimeError as e:
+        return e.to_response()
+    r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
+    return r
