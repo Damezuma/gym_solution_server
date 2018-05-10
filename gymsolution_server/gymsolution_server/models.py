@@ -24,16 +24,7 @@ class User:
         self.name = name
         self.phonenumber = phonenumber
         self.password = password
-    @staticmethod
-    def get_by_token(token:str):
-        from flask import g
-        connection = g.connection
-        cur = connection.cursor()
-        args = (token)
-        cur.execute("SELECT * FROM token = %s",  args)
-        connection.close()
-        #TODO:
-        return None
+
     @staticmethod
     def find(uid:int):
         from flask import g
