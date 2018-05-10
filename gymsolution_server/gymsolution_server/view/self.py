@@ -4,7 +4,7 @@ from flask import Response
 from gymsolution_server import app
 import gymsolution_server.models as models
 import json
-from gymsolution_server import json_handler
+from gymsolution_server import json_handler, RuntimeError
 @app.route("/user", methods=["GET"])
 def token_user_get():
     response = dict()
@@ -44,29 +44,26 @@ def token_user_group_post(group):
     (response["msg"], status) = ("완료되었습니다", 200)
     trainee = None
     token = request.headers.get("x-gs-token", None)
-    if token is None:
-        (response["msg"], status) = ("토큰이(가) 존재하지 않습니다.", 403)
-    else:
-        temp = models.User.get_by_token(token)
-        t = type(temp)
+    try:
+        if token is None:
+            raise RuntimeError ("토큰이(가) 존재하지 않습니다.", 403)
+        trainee = models.User.get_by_token(token)
+        t = type(trainee)
         if t is models.NotFoundAccount:
-            (response["msg"], status) = ("토큰이(가) 유효하지 않습니다.", 403)
-        elif t is not models.Trainee:
-             (response["msg"], status) = ("트레이니이(가) 아닙니다.", 403)
+            raise RuntimeError ("토큰이(가) 유효하지 않습니다.", 403)
+        if t is not models.Trainer:
+             raise RuntimeError ("트레이니이(가) 아닙니다.", 403)
+        group = models.Group.find(group)
+        if group is None:
+             raise RuntimeError ("그룹이(가) 존재하지 않습니다.", 404)
+        if  group.start_date > datetime.now().date():
+             (response["msg"], status) =  ("그룹 참가이(가) 마감되었습니다.", 404)
         else:
-            trainee = temp
-    if trainee is None:
-        r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
-        return r
-    group = models.Group.find(group)
-    if group is None:
-         (response["msg"], status) = ("그룹이(가) 존재하지 않습니다.", 404)
-    elif not group.opened:
-        (response["msg"], status) = ("그룹 참가이(가) 마감되었습니다.", 404)
-    else:
-        res = trainee.enter_group(group)
-        if not res:
-            (response["msg"], status) = ("그룹에 들어갈 수 없습니다.", 404)
+            res = trainee.enter_group(group)
+            if not res:
+                (response["msg"], status) = ("그룹에 들어갈 수 없습니다.", 404)
+    except RuntimeError as e:
+        return e.to_response()
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
 
