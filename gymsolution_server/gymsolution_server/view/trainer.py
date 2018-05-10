@@ -110,3 +110,60 @@ def trainers_UID_images_post(uid):
     (response["msg"], status) = ("완료되었습니다", 200)
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
+@app.route("/traines/<int:uid>/reviews", methods=["GET"])
+def trainers_UID_reviews_get(uid:int):
+    response = dict()
+    response["msg"] = "완료되었습니다"
+    status = 200
+    try:
+        token = request.headers.get("x-gs-token", None)
+        if token is None:
+            raise RuntimeError("토큰이 존재하지 않습니다.",400)
+        user = models.User.get_by_token(token)
+        if type(user)  is models.NotFoundAccount:
+            raise RuntimeError("토큰이 유효하지 않습니다.", 403)
+        trainer = models.Trainer.find(uid)
+        if type(trainer) is not models.Trainer:
+            raise RuntimeError("해당 uid는 트레이너가 아닙니다.", 403)
+        res = models.Review.get_list(trainer)
+        response["reviews"]  = res
+    except RuntimeError as e:
+        return e.to_response()
+    r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
+    return r
+@app.route("/traines/<int:uid>/reviews", methods=["POST"])
+def trainers_UID_reviews_post(uid:int):
+    response = dict()
+    response["msg"] = "완료되었습니다"
+    status = 200
+    try:
+        token = request.headers.get("x-gs-token", None)
+        if token is None:
+            raise RuntimeError("토큰이 존재하지 않습니다.",400)
+        user = models.User.get_by_token(token)
+        if type(user) is not models.Trainee:
+            raise RuntimeError("토큰이 유효하지 않습니다.", 403)
+        trainer = models.Trainer.find(uid)
+        if type(trainer) is not models.Trainer:
+            raise RuntimeError("해당 uid는 트레이너가 아닙니다.", 403)
+        #해당 유저가 트레이너가 개최한 그룹에 속해 있어야 한다. 
+        trainer_groups =  trainer.get_groups()
+        user_groups = user.get_groups()
+        if len( filter(lambda x: x in trainer_groups, user_groups)) ==0:
+            raise RuntimeError("해당 유저는 트레이너를 리뷰할 수 없습니다.", 403)
+        form = request.data
+        form = json.loads(form.decode("utf-8"))
+        
+        comments = form.get("comments", None)
+        grade = form.get("grade", None)
+        
+        if comments is None or grade is None:
+            raise RuntimeError("리뷰를 제대로 전송하지 않았습니다.", 403)
+
+        review = models.Review(None, trainer, user,comments,grade)
+        review.insert()
+
+    except RuntimeError as e:
+        return e.to_response()
+    r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
+    return r

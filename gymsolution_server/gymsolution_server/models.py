@@ -690,6 +690,15 @@ class Review:
         self.grade = grade
         pass
     def insert(self):
+        from flask import g
+        connection = g.connection
+        cur = connection.cursor()
+        qry = \
+        """
+        INSERT INTO tb_reviews (`trainer-uid`, `trainee-uid`, `comments`, `grade`) VALUES (%s,%s,%s,%s)
+        """
+        cur.execute(qry, (self.trainer.uid, self.trainee.uid, self.comments, self.grade))
+        connection.commit()
         pass
     @staticmethod
     def get_list(user):
