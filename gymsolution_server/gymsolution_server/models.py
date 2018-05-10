@@ -9,10 +9,10 @@ class Error:
         pass
 class IncollectPassword(Error):
     def __init__(self):
-        return super().__init__("password가 다릅니다.")
+        super().__init__("password가 다릅니다.")
 class NotFoundAccount(Error):
     def __init__(self):
-        return super().__init__("계정을 찾을 수 없습니다.")
+         super().__init__("계정을 찾을 수 없습니다.")
 class User:
     uid = None
     name = None#str()
@@ -24,16 +24,7 @@ class User:
         self.name = name
         self.phonenumber = phonenumber
         self.password = password
-    @staticmethod
-    def get_by_token(token:str):
-        from flask import g
-        connection = g.connection
-        cur = connection.cursor()
-        args = (token)
-        cur.execute("SELECT * FROM token = %s",  args)
-        connection.close()
-        #TODO:
-        return None
+
     @staticmethod
     def find(uid:int):
         from flask import g
@@ -133,7 +124,7 @@ class Trainer(User):
         self.gym_uid = gym_uid
         self.self_introduction_text = self_introduction_text
         self.profile_image = profile_image
-        pass
+
     def insert(self):
         from flask import g
         connection = g.connection
@@ -146,7 +137,7 @@ class Trainer(User):
             return False
         cur = connection.cursor()
         arg =  (self.phonenumber, self.name, self.password)
-        cur.execute("INSERT INTO tb_users (phone_number, name, password) VALUES (%s, %s, password(%s))",arg)
+        cur.execute("INSERT INTO tb_users (phone_number, name, password) VALUES (%s, %s, password(%s))", arg)
         cur.execute("SELECT last_insert_id() as 'uid'")
         row = cur.fetchone()
         self.uid = row["uid"]
@@ -164,6 +155,8 @@ class Trainer(User):
         cur.execute("SELECT * FROM tb_groups WHERE opener_uid = %s ",  args)
         res = list();
         row = cur.fetchone()
+        gyms = dict()
+        openers = dict()
         while row is not None:
             group = dict()
             gym_uid = row["gym_uid"]
