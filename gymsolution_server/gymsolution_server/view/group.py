@@ -170,9 +170,11 @@ def groups_UID_get(uid):
         if token is None:
            raise RuntimeError("토큰이 존재하지 않습니다.", 403)
         if type(models.User.get_by_token(token)) is models.NotFoundAccount:
-           raise RuntimeError ("토큰이 유효하지 않습니다.", 404)
-
-
+           raise RuntimeError ("토큰이 유효하지 않습니다.", 403)
+        group = models.Group.find(uid)
+        if group is None:
+            raise RuntimeError ("그룹이 존재하지 않습니다.", 404)
+        response = group
     except RuntimeError as  e:
         return e.to_response()
     r = Response(response= json.dumps(response, default=json_handler), status=200, mimetype="application/json")
