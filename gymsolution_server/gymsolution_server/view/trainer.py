@@ -71,6 +71,30 @@ def trainers_UID_images_get(uid):
     (response["msg"], status) = ("완료되었습니다", 200)
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
+@app.route("/trainers/<int:uid>/images/<string:name>", methods=["DELETE"])
+def trainers_UID_images_get(uid):
+    response = dict()
+    try:
+        token = request.headers.get("x-gs-token", None)
+        if token is None:
+            raise RuntimeError("토큰이 존재하지 않습니다.",400)
+        user = models.User.get_by_token(token)
+        if type(user) is models.NotFoundAccount:
+            raise RuntimeError("토큰이 유효하지 않습니다.", 403)
+        trainer = models.Trainer.find(uid)
+        if type(trainer) is not models.Trainer:
+            raise RuntimeError("해당 uid는 트레이너가 아닙니다.", 403)
+        res =models.Image.get_list(trainer)
+        if not name in  (x.image_name for x in res):
+            raise RuntimeError("이미지 파일이 존재하지 않습니다.", 403)
+        img = models.Image(NameError, trainer)
+        img.delete()
+        response["images"] = res
+    except RuntimeError as e:
+        return e.to_response()
+    (response["msg"], status) = ("완료되었습니다", 200)
+    r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
+    return r
 @app.route("/trainers/<int:uid>/images", methods=["POST"])
 def trainers_UID_images_post(uid):
     response = dict()
@@ -101,8 +125,8 @@ def trainers_UID_images_post(uid):
         hash512 = hashlib.sha512()
         img = base64.decodebytes(img.encode())
         hash512.update(img)
-        image_name = hash512.hexdigest()
-        res = models.Image(image_name, trainer, img, mime, None)
+        image_name = hash512.hexdigest() + "." + mime
+        res = models.Image(image_name, trainer, img,  None)
         res.upload()
         
     except RuntimeError as e:
@@ -110,7 +134,7 @@ def trainers_UID_images_post(uid):
     (response["msg"], status) = ("완료되었습니다", 200)
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
-@app.route("/traines/<int:uid>/reviews", methods=["GET"])
+@app.route("/trainers/<int:uid>/reviews", methods=["GET"])
 def trainers_UID_reviews_get(uid:int):
     response = dict()
     response["msg"] = "완료되었습니다"
@@ -131,7 +155,7 @@ def trainers_UID_reviews_get(uid:int):
         return e.to_response()
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
-@app.route("/traines/<int:uid>/reviews", methods=["POST"])
+@app.route("/trainers/<int:uid>/reviews", methods=["POST"])
 def trainers_UID_reviews_post(uid:int):
     response = dict()
     response["msg"] = "완료되었습니다"

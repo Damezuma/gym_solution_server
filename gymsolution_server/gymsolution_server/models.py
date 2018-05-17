@@ -583,28 +583,36 @@ class Group:
             res.append(Group(**group))
         return res
 class Image:
-    def __init__(self, image_name:str, uploader, data, image_type, upload_datetime):
+    def __init__(self, image_name:str, uploader, data, upload_datetime):
         if type(uploader) is int:
             self.uploader_uid = uploader
         else:
             self.uploader_uid = uploader.uid
         self.image_name = image_name
         self.data = data
-        self.image_type = image_type
+        
     def upload(self):
         from flask import g
         connection = g.connection
         cur = connection.cursor()
-        arg =  (self.uploader_uid, self.image_name, self.image_type)
-        columns = "uploader_uid, image_name, image_type"
+        arg =  (self.uploader_uid, self.image_name )
+        columns = "uploader_uid, image_name"
         args_str = ("%s," * len(arg))[:-1]
         table = "tb_images"
         qry = "INSERT INTO %s (%s) VALUES (%s)"%(table, columns, args_str)
         cur.execute(qry, arg)
-        file_path = "{}/images/{}.{}".format(app.config['UPLOAD_FOLDER'], self.image_name, self.image_type)
+        file_path = "{}/images/{}".format(app.config['UPLOAD_FOLDER'], self.image_name)
         fp = open(file_path, "wb+")
         fp.write(self.data)
         fp.close()
+        connection.commit()
+    def delete(self):
+        from flask import g
+        connection = g.connection
+        cur = connection.cursor()
+        arg =  (self.uploader_uid, self.image_name )
+        qry = "DELETE FROM tb_images WHERE  upload_uid = %s and image_name = %s"
+        cur.execute(qry, arg)
         connection.commit()
     @staticmethod
     def get_list(uploader):
@@ -616,16 +624,17 @@ class Image:
         rows = cur.fetchall()
         return map(lambda  row: Image(uploader= row["uploader_uid"], 
                                       upload_datetime =row["upload_datetime"],
-                                        image_type = row["image_type"],
                                         image_name = row["image_name"],
                                         data = None)
             ,rows)
 
 class MeasurementInfo:
-    def __init__(self, image_name:str, uploader, data, image_type, weight, muscle, fat, comment):
+    def __init__(self, image_name:str, uploader, trainee, data, image_type, weight, muscle, fat, comment, udate = None):
         if type(uploader) is int:
             uploader = User.find(uploader)
+            trainee = User.find(trainee)
         self.uploader = uploader
+        self.trainee = trainee
         self.image_name = image_name
         self.data = data
         self.image_type = image_type
@@ -633,13 +642,14 @@ class MeasurementInfo:
         self.muscle = muscle
         self.fat = fat
         self.comment = comment
+        self.udate = udate
         pass
     def upload(self):
         from flask import g
         connection = g.connection
         cur = connection.cursor()
-        arg =  (self.uploader.uid, self.image_name, self.image_type,self.weight, self.muscle, self.fat, self.comment)
-        columns = "uploader_uid, image_name, image_type, weight, muscle, fat, comment"
+        arg =  (self.trainee.uid, self.uploader.uid, self.image_name, self.image_type,self.weight, self.muscle, self.fat, self.comment, udate)
+        columns = "user_uid, uploader_uid, image_name, image_type, weight, muscle, fat, comment, upload_datetime"
         args_str = ("%s," * len(arg))[:-1]
         table = "tb_measurement_infos"
         qry = "INSERT INTO %s (%s) VALUES (%s)"%(table, columns, args_str)
@@ -653,17 +663,17 @@ class MeasurementInfo:
 
 class MeasurementInfoList:
     @staticmethod
-    def get(uploader):
-        if type(uploader) is int:
-            uploader = User.find(uploader)
+    def get(user):
+        if type(user) is int:
+            user = User.find(user)
         from flask import g
         connection = g.connection
         cur = connection.cursor()
         qry = \
         """SELECT *
         FROM tb_measurement_infos
-        WHERE uploader_uid = %s ORDER BY upload_datetime DESC"""
-        cur.execute(qry, (uploader.uid))
+        WHERE user_uid = %s ORDER BY upload_datetime DESC"""
+        cur.execute(qry, (user.uid))
         res = list()
         row = cur.fetchone()
         while row is not None:

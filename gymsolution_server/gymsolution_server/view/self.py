@@ -154,6 +154,7 @@ def user_bodymeasurements_post():
     measurement_log = models.MeasurementInfo(
         image_name=image_name,
         uploader=user,
+        trainee=user,
         data=img,
         image_type=img_type,
         weight=weight,
