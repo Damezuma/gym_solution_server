@@ -162,8 +162,23 @@ def groups_GROUPUID_users_TRAINEE_UID_bodymeasurements_post(group_uid, trainee_u
         return e.to_response()
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
+@app.route("/groups/<int:uid>", methods=["GET"])
+def groups_UID_get(uid):
+    response = dict()
+    try:
+        token = request.headers.get("x-gs-token", None)
+        if token is None:
+           raise RuntimeError("토큰이 존재하지 않습니다.", 403)
+        if type(models.User.get_by_token(token)) is models.NotFoundAccount:
+           raise RuntimeError ("토큰이 유효하지 않습니다.", 404)
 
-@app.route("/gyms/<int:uid>/users/<int:trainee>/bodymeasurements", methods=["GET"])
+
+    except RuntimeError as  e:
+        return e.to_response()
+    r = Response(response= json.dumps(response, default=json_handler), status=200, mimetype="application/json")
+    return r
+    
+@app.route("/groups/<int:uid>/users/<int:trainee>/bodymeasurements", methods=["GET"])
 def gym_UID_users_TRAINEE_bodymeasurements_get(uid, trainee):
     response = dict()
     try:

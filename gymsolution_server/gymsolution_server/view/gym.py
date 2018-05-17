@@ -64,6 +64,8 @@ def gym_del(uid):
         (response["msg"], status) = ("디비 쿼리에 실패했습니다.", 500)
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
+
+    
 @app.route("/gyms/<int:uid>/trainers")
 def gym_trainer_get(uid):
     content_type = request.headers.get("content-type","")
