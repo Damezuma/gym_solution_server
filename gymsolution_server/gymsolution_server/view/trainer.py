@@ -1,8 +1,10 @@
 from datetime import datetime,time
+import gymsolution_server
 from flask import render_template, views, request, send_file, send_from_directory
 from flask import Response
 from gymsolution_server import app
 import gymsolution_server.models as models
+
 import json
 from gymsolution_server import json_handler, RuntimeError
 
@@ -72,7 +74,7 @@ def trainers_UID_images_get(uid):
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
 @app.route("/trainers/<int:uid>/images/<string:name>", methods=["DELETE"])
-def trainers_UID_images_get(uid):
+def trainers_UID_images_delete(uid):
     response = dict()
     try:
         token = request.headers.get("x-gs-token", None)

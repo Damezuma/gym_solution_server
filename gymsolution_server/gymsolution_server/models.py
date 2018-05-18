@@ -732,3 +732,40 @@ class Review:
             res.append(item)
             row  = cur.fetchone()
             return res
+class Training:
+    def __init__(self, number:int , udate:datetime.date, group:Group , name:str , count:int):
+        self.udate= udate
+        self.group = group
+        self.name = name
+        self.count = count
+        self.number = number
+    def insert(self):
+        from flask import g
+        connection = g.connection
+        cur = connection.cursor()
+        qry = \
+        """
+        INSERT INTO tb_triaining_logs (`udate`, `number`, `group_uid`, `training_name`, `training_count`) VALUES (%s,%s,%s,%s)
+        """
+        cur.execute(qry, (self.udate, self.number, self.group.uid, name, count))
+    @staticmethod
+    def get_list(group:Group):
+        from flask import g
+        connection = g.connection
+        cur = connection.cursor()
+        qry = \
+        """
+        SELECT * FROM tb_triaining_logs WHERE group_uid = %s
+        """
+        cur.execute(qry, (group.uid))
+        res = list()
+        row = cur.fetchone()
+        while row is not None:
+            udate = row["udate"]
+            number = row["number"]
+            name = row["name"]
+            count = row["count"]
+            item = Training(number, udate, None, name, count)
+            res.append(item)
+            row = cur.fetchone()
+        return res

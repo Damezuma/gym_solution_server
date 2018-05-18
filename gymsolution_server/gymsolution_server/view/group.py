@@ -181,7 +181,7 @@ def groups_UID_get(uid):
     return r
     
 @app.route("/groups/<int:uid>/users/<int:trainee>/bodymeasurements", methods=["GET"])
-def gym_UID_users_TRAINEE_bodymeasurements_get(uid, trainee):
+def groups_UID_users_TRAINEE_bodymeasurements_get(uid, trainee):
     response = dict()
     try:
         content_type = request.headers.get("content-type","")
@@ -208,5 +208,64 @@ def gym_UID_users_TRAINEE_bodymeasurements_get(uid, trainee):
     except RuntimeError as e:
         return e.to_response()
 
+    r = Response(response= json.dumps(response, default=json_handler), status=200, mimetype="application/json")
+    return r
+@app.route("/groups/<int:uid>/trainings/<udate>", methods=["PUT"])
+def groups_UID_trainings_UDATE_post(uid, trainee,udate):
+    response = dict()
+    try:
+        content_type = request.headers.get("content-type","")
+        token = request.headers.get("x-gs-token")
+        (response["msg"], status) = ("완료되었습니다", 200)
+        user = None
+        if token is None:
+            raise RuntimeError("토큰이 존재하지 않습니다.", 403)
+        else:
+            user = models.User.get_by_token(token)
+            if type(user) is models.NotFoundAccount:
+                raise RuntimeError("토큰이 유효하지 않습니다.", 403)
+        group = models.Group.find(uid)
+        if group is None:
+            raise RuntimeError("그룹이 유효하지 않습니다.", 403)
+        if group.opener.uid != user.uid:
+            raise RuntimeError("그룹의 개설자가 아닙니다.", 403)
+        form = request.data
+        form = json.loads(form.decode("utf-8"))
+        if len(form) > 6:
+            raise RuntimeError("등록할 운동 갯수가 6개를 초과합니다.", 403)
+        trainings = (models.Training(i, udate, group, form[i]["name"], form[i]["count"]) for i in range(len(form)))
+        for t in trainings:
+            t.insert()
+        from flask import g
+        connection = g.connection
+        connection.commit()
+        response["msg"] = "완료되었습니다."
+    except RuntimeError as e:
+        return e.to_response()
+    r = Response(response= json.dumps(response, default=json_handler), status=200, mimetype="application/json")
+    return r
+@app.route("/groups/<int:uid>/trainings", methods=["GET"])
+def groups_UID_trainings_get(uid, trainee,udate):
+    response = dict()
+    try:
+        content_type = request.headers.get("content-type","")
+        token = request.headers.get("x-gs-token")
+        (response["msg"], status) = ("완료되었습니다", 200)
+        user = None
+        if token is None:
+            raise RuntimeError("토큰이 존재하지 않습니다.", 403)
+        else:
+            user = models.User.get_by_token(token)
+            if type(user) is models.NotFoundAccount:
+                raise RuntimeError("토큰이 유효하지 않습니다.", 403)
+        group = models.Group.find(uid)
+        if group is None:
+            raise RuntimeError("그룹이 유효하지 않습니다.", 403)
+        if group.opener.uid != user.uid:
+            raise RuntimeError("그룹의 개설자가 아닙니다.", 403)
+        response = dict({it.udate:it for it in models.Training.get_list(group)})
+
+    except RuntimeError as e:
+        return e.to_response()
     r = Response(response= json.dumps(response, default=json_handler), status=200, mimetype="application/json")
     return r
