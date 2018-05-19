@@ -269,3 +269,11 @@ def groups_UID_trainings_get(uid, trainee,udate):
         return e.to_response()
     r = Response(response= json.dumps(response, default=json_handler), status=200, mimetype="application/json")
     return r
+
+@app.route("/groups/<int:uid>/users/<int:u_uid>/results/before")
+def groups_UID_users_UUID_results_before_get():
+
+    return ""
+@app.route("/groups/<int:uid>/users/<int:u_uid>/results/after")
+def groups_UID_users_UUID_results_before_get():
+    return ""
