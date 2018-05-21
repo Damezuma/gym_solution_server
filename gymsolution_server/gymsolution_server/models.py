@@ -18,7 +18,8 @@ class User:
     name = None#str()
     password = None#str()
     phonenumber = None#str()
-
+    def __hash__(self):
+        return hash(self.uid)
     def __init__(self, uid = None, phonenumber = None, name = None, password = None):
         self.uid = uid
         self.name = name
@@ -465,6 +466,8 @@ class Group:
      period = None
      title = None#string
      user_count = None#int
+     def __hash__(self):
+         return hash(self.uid)
      def __eq__(self, obj):
          if self is obj:
              return True
@@ -548,6 +551,17 @@ class Group:
         group["period"] = row["period"]
         group["title"] = row["title"]
         return Group(**group)
+    
+     def get_members(self):
+        from flask import g
+        connection = g.connection
+        cur = connection.cursor()
+        param = (self.uid)
+        cur.execute("SELECT * FROM v_trainees WHERE uid in (SELECT trainee_uid FROM tb_users_in_group WHERE group_uid = %s)", param)
+        def m(x:dict):
+            return Trainee(x["uid"], x["name"], x["gender"], x["birthday"])
+        return set(map(cur.fetchall(), m))
+
      @staticmethod
      def get_list(rat, long, rad):
         from flask import g

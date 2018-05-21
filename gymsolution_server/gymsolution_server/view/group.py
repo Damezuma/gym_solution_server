@@ -279,4 +279,24 @@ def groups_UID_users_UUID_results_before_get(uid, u_uid):
     return ""
 @app.route("/groups/<int:uid>/users")
 def groups_UID_users_get(uid):
-    return ""
+    response = dict()
+    try:
+        content_type = request.headers.get("content-type","")
+        token = request.headers.get("x-gs-token")
+        (response["msg"], status) = ("완료되었습니다", 200)
+        user = None
+        if token is None:
+            raise RuntimeError("토큰이 존재하지 않습니다.", 403)
+        else:
+            user = models.User.get_by_token(token)
+            if type(user) is models.NotFoundAccount:
+                raise RuntimeError("토큰이 유효하지 않습니다.", 403)
+        group = models.Group.find(uid)
+        if group is None:
+            raise RuntimeError("그룹이 유효하지 않습니다.", 403)
+        response = group.get_members()
+
+    except RuntimeError as e:
+        return e.to_response()
+    r = Response(response= json.dumps(response, default=json_handler), status=200, mimetype="application/json")
+    return r
