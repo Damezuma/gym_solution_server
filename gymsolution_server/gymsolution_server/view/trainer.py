@@ -173,9 +173,10 @@ def trainers_UID_reviews_post(uid:int):
         if type(trainer) is not models.Trainer:
             raise RuntimeError("해당 uid는 트레이너가 아닙니다.", 403)
         #해당 유저가 트레이너가 개최한 그룹에 속해 있어야 한다. 
-        trainer_groups =  trainer.get_groups()
-        user_groups = user.get_groups()
-        if len( filter(lambda x: x in trainer_groups, user_groups)) ==0:
+        trainer_groups =set(  trainer.get_groups())
+        user_groups =set( user.get_groups())
+        
+        if len( user_groups & trainer_groups) ==0:
             raise RuntimeError("해당 유저는 트레이너를 리뷰할 수 없습니다.", 403)
         form = request.data
         form = json.loads(form.decode("utf-8"))
