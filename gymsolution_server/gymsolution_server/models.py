@@ -129,7 +129,7 @@ class Trainer(User):
         self.profile_image = profile_image
         self.profile_image_url = None
         if self.profile_image is not None:
-            self.profile_image_url  = "https://gym.hehehee.net/images/images/{}".format(self.profile_image)
+            self.profile_image_url  = "https://gym.hehehee.net/images/{}".format(self.profile_image)
 
     def insert(self):
         from flask import g
@@ -667,7 +667,7 @@ class MeasurementInfo:
         from flask import g
         connection = g.connection
         cur = connection.cursor()
-        arg =  (self.trainee.uid, self.uploader.uid, self.image_name, self.image_type,self.weight, self.muscle, self.fat, self.comment, udate)
+        arg =  (self.trainee.uid, self.uploader.uid, self.image_name, self.image_type,self.weight, self.muscle, self.fat, self.comment, self.udate)
         columns = "user_uid, uploader_uid, image_name, image_type, weight, muscle, fat, comment, upload_datetime"
         args_str = ("%s," * len(arg))[:-1]
         table = "tb_measurement_infos"
