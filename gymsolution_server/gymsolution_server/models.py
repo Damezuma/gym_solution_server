@@ -636,11 +636,11 @@ class Image:
         qry = "SELECT * FROM tb_images WHERE uploader_uid = %s"
         cur.execute(qry, (uploader.uid))
         rows = cur.fetchall()
-        return map(lambda  row: Image(uploader= row["uploader_uid"], 
+        return list(map(lambda  row: Image(uploader= row["uploader_uid"], 
                                       upload_datetime =row["upload_datetime"],
                                         image_name = row["image_name"],
                                         data = None)
-            ,rows)
+            ,rows))
 
 class MeasurementInfo:
     def __init__(self, image_name:str, uploader, trainee, data, image_type, weight, muscle, fat, comment, udate = None):
@@ -676,6 +676,84 @@ class MeasurementInfo:
         connection.commit()
 
 class MeasurementInfoList:
+    @staticmethod
+    def get_after(group:Group, user:Trainee):
+        from flask import g
+        connection = g.connection
+        cur = connection.cursor()
+        qry = \
+            """
+            SELECT * FROM tb_measurement_infos
+            WHERE upload_datetime = 
+                (SELECT max(upload_datetime)
+                FROM tb_measurement_infos
+                WHERE user_uid = %s AND upload_datetime <= %s)
+            """
+        from datetime import date, timedelta
+        d = group.start_date + timedelta(group.period,0,0)
+        cur.execute(qry, (user.uid , d))
+        row = cur.fetchone()
+        if row is None:
+            return None
+        qry = \
+            """
+            SELECT image_name, image_type FROM tb_measurement_infos
+            WHERE upload_datetime = 
+                (SELECT max(upload_datetime)
+                FROM tb_measurement_infos
+                WHERE user_uid = %s AND upload_datetime <= %s AND image_name is not null)
+            """
+        cur.execute(qry, (user.uid , d))
+        row2 = cur.fetchone()
+        image_name = None
+        if row2 is not None:
+            image_name = "https://gym.hehehee.net/images/{}.{}".format(row["image_name"], row["image_type"])
+
+        return {
+            "image" : image_name,
+            "weight":row["weight"],
+            "muscle":row["muscle"],
+            "fat":row["fat"],
+            }
+    @staticmethod
+    def get_before(group:Group, user:Trainee):
+        from flask import g
+        connection = g.connection
+        cur = connection.cursor()
+        qry = \
+            """
+            SELECT * FROM tb_measurement_infos
+            WHERE upload_datetime = 
+                (SELECT min(upload_datetime)
+                FROM tb_measurement_infos
+                WHERE user_uid = %s AND upload_datetime >= %s)
+            """
+        from datetime import date, timedelta
+        d = group.start_date# + timedelta(group.period,0,0)
+        cur.execute(qry, (user.uid , d))
+        row = cur.fetchone()
+        if row is None:
+            return None
+        qry = \
+            """
+            SELECT image_name, image_type FROM tb_measurement_infos
+            WHERE upload_datetime = 
+                (SELECT min(upload_datetime)
+                FROM tb_measurement_infos
+                WHERE user_uid = %s AND upload_datetime >= %s AND image_name is not null)
+            """
+        cur.execute(qry, (user.uid , d))
+        row2 = cur.fetchone()
+        image_name = None
+        if row2 is not None:
+            image_name = "https://gym.hehehee.net/images/{}.{}".format(row["image_name"], row["image_type"])
+
+        return {
+            "image" : image_name,
+            "weight":row["weight"],
+            "muscle":row["muscle"],
+            "fat":row["fat"],
+            }
     @staticmethod
     def get(user):
         if type(user) is int:
@@ -745,7 +823,7 @@ class Review:
                           )
             res.append(item)
             row  = cur.fetchone()
-            return res
+        return res
 class Training:
     def __init__(self, number:int , udate:datetime.date, group:Group , name:str , count:int):
         self.udate= udate
@@ -753,6 +831,7 @@ class Training:
         self.name = name
         self.count = count
         self.number = number
+    
     def insert(self):
         from flask import g
         connection = g.connection

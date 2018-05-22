@@ -272,11 +272,60 @@ def groups_UID_trainings_get(uid, trainee,udate):
 
 @app.route("/groups/<int:uid>/users/<int:u_uid>/results/before")
 def groups_UID_users_UUID_results_before_get(uid, u_uid):
+    response = dict()
+    try:
+        content_type = request.headers.get("content-type","")
+        token = request.headers.get("x-gs-token")
+        (response["msg"], status) = ("완료되었습니다", 200)
+        user = None
+        if token is None:
+            raise RuntimeError("토큰이 존재하지 않습니다.", 403)
+        else:
+            user = models.User.get_by_token(token)
+            if type(user) is models.NotFoundAccount:
+                raise RuntimeError("토큰이 유효하지 않습니다.", 403)
+        group = models.Group.find(uid)
+        if group is None:
+            raise RuntimeError("그룹이 유효하지 않습니다.", 403)
+        trainee = models.User.find(trainee)
+        if type(trainee) is not models.Trainee:
+            raise RuntimeError("유저가 잘못되었습니다.", 403)
+        if not group in trainee.get_groups():
+            raise RuntimeError("해당 그룹에 유저가 가입하지 않았습니다.", 403)
+        response = models.MeasurementInfoList.get_before(group, trainee)
+    except RuntimeError as e:
+        return e.to_response()
 
-    return ""
+    r = Response(response= json.dumps(response, default=json_handler), status=200, mimetype="application/json")
+    return r
 @app.route("/groups/<int:uid>/users/<int:u_uid>/results/after")
 def groups_UID_users_UUID_results_after_get(uid, u_uid):
-    return ""
+    response = dict()
+    try:
+        content_type = request.headers.get("content-type","")
+        token = request.headers.get("x-gs-token")
+        (response["msg"], status) = ("완료되었습니다", 200)
+        user = None
+        if token is None:
+            raise RuntimeError("토큰이 존재하지 않습니다.", 403)
+        else:
+            user = models.User.get_by_token(token)
+            if type(user) is models.NotFoundAccount:
+                raise RuntimeError("토큰이 유효하지 않습니다.", 403)
+        group = models.Group.find(uid)
+        if group is None:
+            raise RuntimeError("그룹이 유효하지 않습니다.", 403)
+        trainee = models.User.find(trainee)
+        if type(trainee) is not models.Trainee:
+            raise RuntimeError("유저가 잘못되었습니다.", 403)
+        if not group in trainee.get_groups():
+            raise RuntimeError("해당 그룹에 유저가 가입하지 않았습니다.", 403)
+        response = models.MeasurementInfoList.get_after(group, trainee)
+    except RuntimeError as e:
+        return e.to_response()
+
+    r = Response(response= json.dumps(response, default=json_handler), status=200, mimetype="application/json")
+    return r
 @app.route("/groups/<int:uid>/users")
 def groups_UID_users_get(uid):
     response = dict()
