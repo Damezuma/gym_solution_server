@@ -114,6 +114,8 @@ class User:
         else:
             _class = Trainer
             param["gym_uid"] = row["gym_uid"]
+            param["self_introduction_text"] = row["self_introduction_text"]
+            param["profile_image"] = row["profile_image"]
         user = _class(**param)
         return user
 class Trainer(User):
@@ -125,6 +127,9 @@ class Trainer(User):
         self.gym_uid = gym_uid
         self.self_introduction_text = self_introduction_text
         self.profile_image = profile_image
+        self.profile_image_url = None
+        if self.profile_image is not None:
+            self.profile_image_url  = "https://gym.hehehee.net/images/images/{}".format(self.profile_image)
 
     def insert(self):
         from flask import g
@@ -190,7 +195,7 @@ class Trainer(User):
         for it in args:
             if it == "profile_image":
                 import base64
-                data = base64.decodebytes(values[it])
+                data = base64.decodebytes(args[it].encode())
                 import hashlib
                 hash512 = hashlib.sha512()
                 hash512.update(data)
@@ -198,7 +203,7 @@ class Trainer(User):
                 content_type =  request.headers.get("content-type", None)
                 if content_type is None:
                     return False, "content-type이 올바르지 않습니다."
-                ext = content_type.split("/")[1].strip()
+                ext = content_type.split("/")[1].split(";")[0].strip()
                 filename = filename + "." + ext
                 file_path = "{}/images/{}".format(app.config['UPLOAD_FOLDER'], filename)
                 fp = open(file_path, "wb+")
@@ -825,22 +830,22 @@ class Review:
             row  = cur.fetchone()
         return res
 class Training:
-    def __init__(self, number:int , udate:datetime.date, group:Group , name:str , count:int):
+    def __init__(self, number:int , udate:datetime.date, group:Group , name:str , count:int, set:int):
         self.udate= udate
         self.group = group
         self.name = name
         self.count = count
         self.number = number
-    
+        self.set = set
     def insert(self):
         from flask import g
         connection = g.connection
         cur = connection.cursor()
         qry = \
         """
-        INSERT INTO tb_triaining_logs (`udate`, `number`, `group_uid`, `training_name`, `training_count`) VALUES (%s,%s,%s,%s)
+        INSERT INTO tb_triaining_logs (`udate`, `number`, `group_uid`, `training_name`, `training_count`, `training_set`) VALUES (%s,%s,%s,%s, %s)
         """
-        cur.execute(qry, (self.udate, self.number, self.group.uid, name, count))
+        cur.execute(qry, (self.udate, self.number, self.group.uid, self.name, self.count, self.set))
     @staticmethod
     def get_list(group:Group):
         from flask import g

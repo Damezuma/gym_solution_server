@@ -233,7 +233,7 @@ def groups_UID_trainings_UDATE_post(uid, trainee,udate):
         form = json.loads(form.decode("utf-8"))
         if len(form) > 6:
             raise RuntimeError("등록할 운동 갯수가 6개를 초과합니다.", 403)
-        trainings = (models.Training(i, udate, group, form[i]["name"], form[i]["count"]) for i in range(len(form)))
+        trainings = (models.Training(i, udate, group, form[i]["name"], form[i]["count"], form[i]["set"]) for i in range(len(form)))
         for t in trainings:
             t.insert()
         from flask import g
