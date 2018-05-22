@@ -4,13 +4,15 @@ The flask application package.
 import pymysql
 from flask import Flask, g, Response
 from datetime import time
+import json
 class RuntimeError(Exception):
     def __init__(self, msg, code):
         self.message = msg
         self.code = code
     def to_response(self):
+        print(self.message)
         d = {"msg": self.message}
-        r = Response(response= json.dumps(d, default=json_handler), status=self.code, mimetype="application/json")
+        r = Response(json.dumps(d, default=json_handler), status=self.code, mimetype="application/json")
         return r
 def json_handler(obj):
     if hasattr(obj,"__dict__"):

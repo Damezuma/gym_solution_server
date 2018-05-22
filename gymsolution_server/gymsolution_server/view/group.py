@@ -275,7 +275,7 @@ def groups_UID_users_UUID_results_before_get(uid, u_uid):
 
     return ""
 @app.route("/groups/<int:uid>/users/<int:u_uid>/results/after")
-def groups_UID_users_UUID_results_before_get(uid, u_uid):
+def groups_UID_users_UUID_results_after_get(uid, u_uid):
     return ""
 @app.route("/groups/<int:uid>/users")
 def groups_UID_users_get(uid):
