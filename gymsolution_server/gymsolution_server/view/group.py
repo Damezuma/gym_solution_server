@@ -211,7 +211,7 @@ def groups_UID_users_TRAINEE_bodymeasurements_get(uid, trainee):
     r = Response(response= json.dumps(response, default=json_handler), status=200, mimetype="application/json")
     return r
 @app.route("/groups/<int:uid>/trainings/<udate>", methods=["PUT"])
-def groups_UID_trainings_UDATE_post(uid, trainee,udate):
+def groups_UID_trainings_UDATE_post(uid,udate):
     response = dict()
     try:
         content_type = request.headers.get("content-type","")
@@ -245,7 +245,7 @@ def groups_UID_trainings_UDATE_post(uid, trainee,udate):
     r = Response(response= json.dumps(response, default=json_handler), status=200, mimetype="application/json")
     return r
 @app.route("/groups/<int:uid>/trainings", methods=["GET"])
-def groups_UID_trainings_get(uid, trainee,udate):
+def groups_UID_trainings_get(uid):
     response = dict()
     try:
         content_type = request.headers.get("content-type","")

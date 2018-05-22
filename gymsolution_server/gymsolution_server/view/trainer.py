@@ -112,9 +112,8 @@ def trainers_UID_images_post(uid):
             raise RuntimeError("해당 uid는 트레이너가 아닙니다.", 403)
         if user.uid != trainer.uid:
             raise RuntimeError("업로드 권한이 없습니다.", 403)
-        form = request.data
-        form = json.loads(form.decode("utf-8"))
-        img = form.get("data", None)
+
+        img = request.data
         content_type = request.headers.get("content-type")
         if img is None:
             raise RuntimeError("이미지가 없습니다.", 403)
@@ -125,7 +124,7 @@ def trainers_UID_images_post(uid):
         mime = temp[0].split("/")[1].strip()
         b = temp[1].strip()
         hash512 = hashlib.sha512()
-        img = base64.decodebytes(img.encode())
+        img = base64.decodebytes(img)
         hash512.update(img)
         image_name = hash512.hexdigest() + "." + mime
         res = models.Image(image_name, trainer, img,  None)

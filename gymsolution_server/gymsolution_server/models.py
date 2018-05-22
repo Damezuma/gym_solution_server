@@ -563,10 +563,8 @@ class Group:
         cur = connection.cursor()
         param = (self.uid)
         cur.execute("SELECT * FROM v_trainees WHERE uid in (SELECT trainee_uid FROM tb_users_in_group WHERE group_uid = %s)", param)
-        def m(x:dict):
-            return Trainee(x["uid"], x["name"], x["gender"], x["birthday"])
-        return set(map(cur.fetchall(), m))
-
+        return set(map(lambda x:Trainee(x["uid"], x["name"], x["gender"], x["birthday"]),cur.fetchall()))
+        
      @staticmethod
      def get_list(rat, long, rad):
         from flask import g
@@ -843,7 +841,7 @@ class Training:
         cur = connection.cursor()
         qry = \
         """
-        INSERT INTO tb_triaining_logs (`udate`, `number`, `group_uid`, `training_name`, `training_count`, `training_set`) VALUES (%s,%s,%s,%s, %s)
+        INSERT INTO tb_training_logs (`udate`, `number`, `group_uid`, `training_name`, `training_count`, `training_set`) VALUES (%s,%s,%s,%s, %s, %s)
         """
         cur.execute(qry, (self.udate, self.number, self.group.uid, self.name, self.count, self.set))
     @staticmethod
@@ -853,7 +851,7 @@ class Training:
         cur = connection.cursor()
         qry = \
         """
-        SELECT * FROM tb_triaining_logs WHERE group_uid = %s
+        SELECT * FROM tb_training_logs WHERE group_uid = %s
         """
         cur.execute(qry, (group.uid))
         res = list()
@@ -861,9 +859,10 @@ class Training:
         while row is not None:
             udate = row["udate"]
             number = row["number"]
-            name = row["name"]
-            count = row["count"]
-            item = Training(number, udate, None, name, count)
+            name = row["training_name"]
+            count = row["training_count"]
+            set = row["training_set"]
+            item = Training(number, udate, None, name, count,set)
             res.append(item)
             row = cur.fetchone()
         return res
