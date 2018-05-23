@@ -845,23 +845,27 @@ class Training:
         """
         cur.execute(qry, (self.udate, self.number, self.group.uid, self.name, self.count, self.set))
     @staticmethod
-    def get_list(group:Group, udate):
+    def get_list(group:Group):
         from flask import g
         connection = g.connection
         cur = connection.cursor()
         qry = \
         """
-        SELECT * FROM tb_training_logs WHERE group_uid = %s AND udate = %s
+        SELECT * FROM tb_training_logs WHERE group_uid = %s
         """
         cur.execute(qry, (group.uid, udate))
-        res = list()
+        res = dict()
         row = cur.fetchone()
         while row is not None:
+            udate = row["udate"].strftime("%Y-%m-%d")
+            if res.get(udate, None) is None:
+                res[udate] = list()
+
             number = row["number"]
             name = row["training_name"]
             count = row["training_count"]
             set = row["training_set"]
             item = Training(number, None, None, name, count,set)
-            res.append(item)
+            res[udate].append(item)
             row = cur.fetchone()
         return res
