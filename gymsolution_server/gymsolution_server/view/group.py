@@ -247,7 +247,7 @@ def groups_UID_trainings_UDATE_post(uid,udate):
             return True
 
         trainings = (models.Training(i, udate, group, form[i]["name"], form[i]["count"], form[i]["set"]) for i in range(len(form)))
-        for t in map(lambda idx, training:models.Training(idx, udate, group, training["name"], training["count"], training["set"]) ,enumerate(filter(filter_training, form))):
+        for t in map(lambda it:models.Training(it[0], udate, group, it[1]["name"], it[1]["count"], it[1]["set"]) ,enumerate(filter(filter_training, form))):
             t.insert()
         from flask import g
         connection = g.connection

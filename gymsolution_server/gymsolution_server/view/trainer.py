@@ -74,7 +74,7 @@ def trainers_UID_images_get(uid):
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
 @app.route("/trainers/<int:uid>/images/<string:name>", methods=["DELETE"])
-def trainers_UID_images_delete(uid):
+def trainers_UID_images_delete(uid, name):
     response = dict()
     try:
         token = request.headers.get("x-gs-token", None)
@@ -87,9 +87,9 @@ def trainers_UID_images_delete(uid):
         if type(trainer) is not models.Trainer:
             raise RuntimeError("해당 uid는 트레이너가 아닙니다.", 403)
         res =models.Image.get_list(trainer)
-        if not name in  (x.image_name for x in res):
+        if not name in  {x.image_name for x in res}:
             raise RuntimeError("이미지 파일이 존재하지 않습니다.", 403)
-        img = models.Image(NameError, trainer)
+        img = models.Image(name,trainer, None,None)
         img.delete()
         response["images"] = res
     except RuntimeError as e:

@@ -42,6 +42,12 @@ def before_request():
 def teardown_request(exception):
     if hasattr(g, "connection"):
         g.connection.close()
+@app.errorhandler(500)
+def exception_error_500(e:Exception):
+    print(e)
+    r = Response(json.dumps(e, default=json_handler), status=500, mimetype="application/json")
+    return r
+
 import gymsolution_server.views
 import gymsolution_server.models
 

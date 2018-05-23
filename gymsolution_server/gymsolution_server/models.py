@@ -628,7 +628,7 @@ class Image:
         connection = g.connection
         cur = connection.cursor()
         arg =  (self.uploader_uid, self.image_name )
-        qry = "DELETE FROM tb_images WHERE  upload_uid = %s and image_name = %s"
+        qry = "DELETE FROM tb_images WHERE  uploader_uid = %s and image_name = %s"
         cur.execute(qry, arg)
         connection.commit()
     @staticmethod
@@ -690,11 +690,11 @@ class MeasurementInfoList:
             WHERE upload_datetime = 
                 (SELECT max(upload_datetime)
                 FROM tb_measurement_infos
-                WHERE user_uid = %s AND upload_datetime <= %s)
+                WHERE user_uid = %s AND upload_datetime BETWEEN %s AND %s)
             """
         from datetime import date, timedelta
         d = group.start_date + timedelta(group.period,0,0)
-        cur.execute(qry, (user.uid , d))
+        cur.execute(qry, (user.uid ,group.start_date, d))
         row = cur.fetchone()
         if row is None:
             return None
@@ -704,7 +704,7 @@ class MeasurementInfoList:
             WHERE upload_datetime = 
                 (SELECT max(upload_datetime)
                 FROM tb_measurement_infos
-                WHERE user_uid = %s AND upload_datetime <= %s AND image_name is not null)
+                WHERE user_uid = %s AND image_name is not null AND upload_datetime BETWEEN %s AND %s)
             """
         cur.execute(qry, (user.uid , d))
         row2 = cur.fetchone()
