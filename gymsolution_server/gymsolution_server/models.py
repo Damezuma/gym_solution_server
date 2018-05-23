@@ -840,6 +840,11 @@ class Training:
         connection = g.connection
         cur = connection.cursor()
         qry = \
+            """
+            DELETE FROM tb_training_logs WHERE group_uid = %s AND udate= %s AND number = %s 
+            """
+        cur.execute(qry, (self.group.uid, self.udate, self.number))
+        qry = \
         """
         INSERT INTO tb_training_logs (`udate`, `number`, `group_uid`, `training_name`, `training_count`, `training_set`) VALUES (%s,%s,%s,%s, %s, %s)
         """

@@ -237,12 +237,17 @@ def groups_UID_trainings_UDATE_post(uid,udate):
         fields = {"name", "count", "set"}
         for idx, training in enumerate(form):
             for field in fields:
-                if traing.get(field) is None:
+                if training.get(field) is None:
                     err_m.append("{}번째 운동 기록에 {}이(가) 누락되었습니다.".format(idx, field))
-        if len(err_m) != 0:
-            raise RuntimeError("\n".join(err_m), 403)
+        def filter_training(training):
+            fields = {"name", "count", "set"}
+            for field in fields:
+                if training.get(field) is None:
+                    return False
+            return True
+
         trainings = (models.Training(i, udate, group, form[i]["name"], form[i]["count"], form[i]["set"]) for i in range(len(form)))
-        for t in trainings:
+        for t in map(lambda idx, training:models.Training(idx, udate, group, training["name"], training["count"], training["set"]) ,enumerate(filter(filter_training, form))):
             t.insert()
         from flask import g
         connection = g.connection
@@ -269,8 +274,7 @@ def groups_UID_trainings_get(uid):
         group = models.Group.find(uid)
         if group is None:
             raise RuntimeError("그룹이 유효하지 않습니다.", 403)
-        if group.opener.uid != user.uid:
-            raise RuntimeError("그룹의 개설자가 아닙니다.", 403)
+
         response = models.Training.get_list(group)
 
     except RuntimeError as e:
