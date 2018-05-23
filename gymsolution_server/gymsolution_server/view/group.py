@@ -244,8 +244,8 @@ def groups_UID_trainings_UDATE_post(uid,udate):
         return e.to_response()
     r = Response(response= json.dumps(response, default=json_handler), status=200, mimetype="application/json")
     return r
-@app.route("/groups/<int:uid>/trainings", methods=["GET"])
-def groups_UID_trainings_get(uid):
+@app.route("/groups/<int:uid>/trainings/<udate>", methods=["GET"])
+def groups_UID_trainings_get(uid, udate):
     response = dict()
     try:
         content_type = request.headers.get("content-type","")
@@ -263,7 +263,7 @@ def groups_UID_trainings_get(uid):
             raise RuntimeError("그룹이 유효하지 않습니다.", 403)
         if group.opener.uid != user.uid:
             raise RuntimeError("그룹의 개설자가 아닙니다.", 403)
-        response = models.Training.get_list(group)
+        response = models.Training.get_list(group, udate)
 
     except RuntimeError as e:
         return e.to_response()
