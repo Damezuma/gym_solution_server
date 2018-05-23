@@ -263,7 +263,7 @@ def groups_UID_trainings_get(uid):
             raise RuntimeError("그룹이 유효하지 않습니다.", 403)
         if group.opener.uid != user.uid:
             raise RuntimeError("그룹의 개설자가 아닙니다.", 403)
-        response = dict({it.udate:it for it in models.Training.get_list(group)})
+        response = models.Training.get_list(group)
 
     except RuntimeError as e:
         return e.to_response()

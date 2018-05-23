@@ -261,7 +261,7 @@ class Trainee(User):
             if res != 0:
                 print(res)
                 return False
-        except err:
+        except Exception as err:
             print(err)
             return False
         connection.commit()
