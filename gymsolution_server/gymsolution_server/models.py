@@ -853,7 +853,7 @@ class Training:
         """
         SELECT * FROM tb_training_logs WHERE group_uid = %s
         """
-        cur.execute(qry, (group.uid, udate))
+        cur.execute(qry, (group.uid))
         res = dict()
         row = cur.fetchone()
         while row is not None:
