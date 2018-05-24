@@ -680,17 +680,73 @@ class MeasurementInfo:
 
 class MeasurementInfoList:
     @staticmethod
+    def get_group_result_avg(group:Group):
+        qry = \
+            """
+            SELECT weight, muscle, fat FROM tb_measurement_infos
+            WHERE upload_datetime in(
+                SELECT min(upload_datetime) FROM tb_measurement_infos 
+                WHERE upload_datetime BETWEEN ( 
+                    SELECT start_date FROM tb_groups WHERE uid = %s) AND (SELECT DATE_ADD(start_date,INTERVAL period  DAY) FROM tb_groups WHERE uid = %s) GROUP BY user_uid 
+                ) 
+            AND user_uid in ( 
+                SELECT tb_users_in_group.trainee_uid FROM tb_users_in_group 
+                WHERE  group_uid = %s 
+                )
+            """
+        from flask import g
+        connection = g.connection
+        cur = connection.cursor()
+        user_count = cur.execute(qry, (group.uid, group.uid, group.uid))
+        fat = 0
+        muscle = 0
+        weight = 0
+        for row in cur.fetchall():
+            fat -= row["fat"]
+            weight -= row["weight"]
+            muscle -= row["muscle"]
+        qry = \
+            """
+            SELECT weight, muscle, fat FROM tb_measurement_infos
+            WHERE upload_datetime in(
+                SELECT max(upload_datetime) FROM tb_measurement_infos 
+                WHERE upload_datetime BETWEEN ( 
+                    SELECT start_date FROM tb_groups WHERE uid = %s) AND (SELECT DATE_ADD(start_date,INTERVAL period  DAY)FROM tb_groups WHERE uid = %s) GROUP BY user_uid 
+                )
+            AND user_uid in ( 
+                SELECT tb_users_in_group.trainee_uid FROM tb_users_in_group 
+                WHERE  group_uid = %s
+                )
+            """
+        cur.execute(qry, (group.uid, group.uid, group.uid))
+        for row in cur.fetchall():
+            fat += row["fat"]
+            weight += row["weight"]
+            muscle += row["muscle"]
+        
+        #b = set(x["user_uid"] for x in befores)
+        #users = a & b
+        #print(a,"&",b,"=", users)
+        #print(users)
+        #befores= list(filter(lambda row: row["user_uid"] in users, befores))
+        #afters = list(filter(lambda row: row["user_uid"] in users, afters))
+        #fat = 0sum(x["fat"] for x in filter(lambda x: x["user_uid"] in users, befores))
+        
+        if user_count == 0:
+            return None
+        return {"fat":fat / user_count, "musle":muscle / user_count, "weight": weight / user_count}
+    @staticmethod
     def get_after(group:Group, user:Trainee):
         from flask import g
         connection = g.connection
         cur = connection.cursor()
         qry = \
             """
-            SELECT * FROM tb_measurement_infos
+            SELECT * FROM tb_measurement_infos 
             WHERE upload_datetime = 
-                (SELECT max(upload_datetime)
-                FROM tb_measurement_infos
-                WHERE user_uid = %s AND upload_datetime BETWEEN %s AND %s)
+                (SELECT max(upload_datetime) 
+                FROM tb_measurement_infos 
+                WHERE user_uid = %s AND upload_datetime BETWEEN %s AND %s) 
             """
         from datetime import date, timedelta
         d = group.start_date + timedelta(group.period,0,0)
@@ -706,7 +762,7 @@ class MeasurementInfoList:
                 FROM tb_measurement_infos
                 WHERE user_uid = %s AND image_name is not null AND upload_datetime BETWEEN %s AND %s)
             """
-        cur.execute(qry, (user.uid , d))
+        cur.execute(qry, (user.uid ,group.start_date, d))
         row2 = cur.fetchone()
         image_name = None
         if row2 is not None:

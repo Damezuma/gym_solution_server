@@ -15,16 +15,17 @@ def trainers_group_get(uid):
     response = dict()
     (response["msg"], status) = ("완료되었습니다", 200)
     token = request.headers.get("x-gs-token", None)
-    if token is None:
-        (response["msg"], status) = ("토큰이 존재하지 않습니다.", 403)
-    else:
+    try:
+        if token is None:
+            raise RuntimeError("토큰이 존재하지 않습니다.", 403)
         r = models.User.get_by_token(token)
         if type(r) == models.NotFoundAccount:
-             (response["msg"], status) = ("토큰이 유효하지 않습니다.", 403)
-        else:
-            r = models.Trainer(uid, None, None)
-            response["groups"] = res
+             raise RuntimeError("토큰이 유효하지 않습니다.", 403)
+        r = models.Trainer(uid, None, None)
+        response = r.get_groups()
 
+    except RuntimeError as e:
+        return e.to_response()
     r = Response(response= json.dumps(response, default=json_handler), status=status, mimetype="application/json")
     return r
 

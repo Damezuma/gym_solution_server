@@ -45,7 +45,7 @@ def teardown_request(exception):
 @app.errorhandler(500)
 def exception_error_500(e:Exception):
     print(e)
-    r = Response(json.dumps(e, default=json_handler), status=500, mimetype="application/json")
+    r = Response(json.dumps({"message": str(e)}, default=json_handler), status=500, mimetype="application/json")
     return r
 
 import gymsolution_server.views
